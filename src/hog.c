@@ -28,6 +28,7 @@
 
 #include <dt-bindings/zmk/hid_usage.h>
 #include <dt-bindings/zmk/hid_usage_pages.h>
+#include <hog.h>
 
 enum {
 	HIDS_REMOTE_WAKE = BIT(0),
@@ -74,35 +75,6 @@ static struct hids_report mouse_input = {
 
 static uint8_t simulate_input; // host_requests_notification in zmk
 static uint8_t ctrl_point;
-static uint8_t report_map[] = {
-	0x05, 0x01, /* Usage Page (Generic Desktop Ctrls) */
-	0x09, 0x02, /* Usage (Mouse) */
-	0xA1, 0x01, /* Collection (Application) */
-	0x85, 0x01, /*	 Report Id (1) */
-	0x09, 0x01, /*   Usage (Pointer) */
-	0xA1, 0x00, /*   Collection (Physical) */
-	0x05, 0x09, /*     Usage Page (Button) */
-	0x19, 0x01, /*     Usage Minimum (0x01) */
-	0x29, 0x03, /*     Usage Maximum (0x03) */
-	0x15, 0x00, /*     Logical Minimum (0) */
-	0x25, 0x01, /*     Logical Maximum (1) */
-	0x95, 0x03, /*     Report Count (3) */
-	0x75, 0x01, /*     Report Size (1) */
-	0x81, 0x02, /*     Input (Data,Var,Abs,No Wrap,Linear,...) */
-	0x95, 0x01, /*     Report Count (1) */
-	0x75, 0x05, /*     Report Size (5) */
-	0x81, 0x03, /*     Input (Const,Var,Abs,No Wrap,Linear,...) */
-	0x05, 0x01, /*     Usage Page (Generic Desktop Ctrls) */
-	0x09, 0x30, /*     Usage (X) */
-	0x09, 0x31, /*     Usage (Y) */
-	0x15, 0x81, /*     Logical Minimum (129) */
-	0x25, 0x7F, /*     Logical Maximum (127) */
-	0x75, 0x08, /*     Report Size (8) */
-	0x95, 0x02, /*     Report Count (2) */
-	0x81, 0x06, /*     Input (Data,Var,Rel,No Wrap,Linear,...) */
-	0xC0,       /*   End Collection */
-	0xC0,       /* End Collection */
-};
 
 #define ZMK_HID_MOUSE_NUM_BUTTONS 0x05
 
@@ -158,33 +130,9 @@ static const uint8_t zmk_hid_report_desc[] = {
     HID_REPORT_COUNT(0x01),
     HID_INPUT(ZMK_HID_MAIN_VAL_CONST | ZMK_HID_MAIN_VAL_VAR | ZMK_HID_MAIN_VAL_ABS),
 
-// #if IS_ENABLED(CONFIG_ZMK_HID_INDICATORS)
-
-//     HID_USAGE_PAGE(HID_USAGE_LED),
-//     HID_USAGE_MIN8(HID_USAGE_LED_NUM_LOCK),
-//     HID_USAGE_MAX8(HID_USAGE_LED_KANA),
-//     HID_REPORT_SIZE(0x01),
-//     HID_REPORT_COUNT(0x05),
-//     HID_OUTPUT(ZMK_HID_MAIN_VAL_DATA | ZMK_HID_MAIN_VAL_VAR | ZMK_HID_MAIN_VAL_ABS),
-
-//     HID_USAGE_PAGE(HID_USAGE_LED),
-//     HID_REPORT_SIZE(0x03),
-//     HID_REPORT_COUNT(0x01),
-//     HID_OUTPUT(ZMK_HID_MAIN_VAL_CONST | ZMK_HID_MAIN_VAL_VAR | ZMK_HID_MAIN_VAL_ABS),
-
-// #endif // IS_ENABLED(CONFIG_ZMK_HID_INDICATORS)
-
     HID_USAGE_PAGE(HID_USAGE_KEY),
 
-// #if IS_ENABLED(CONFIG_ZMK_HID_REPORT_TYPE_NKRO)
-//     HID_LOGICAL_MIN8(0x00),
-//     HID_LOGICAL_MAX8(0x01),
-//     HID_USAGE_MIN8(0x00),
-//     HID_USAGE_MAX8(ZMK_HID_KEYBOARD_NKRO_MAX_USAGE),
-//     HID_REPORT_SIZE(0x01),
-//     HID_REPORT_COUNT(ZMK_HID_KEYBOARD_NKRO_MAX_USAGE + 1),
-//     HID_INPUT(ZMK_HID_MAIN_VAL_DATA | ZMK_HID_MAIN_VAL_VAR | ZMK_HID_MAIN_VAL_ABS),
-// #elif IS_ENABLED(CONFIG_ZMK_HID_REPORT_TYPE_HKRO)
+    // HKRO
     HID_LOGICAL_MIN8(0x00),
     HID_LOGICAL_MAX16(0xFF, 0x00),
     HID_USAGE_MIN8(0x00),
@@ -192,9 +140,6 @@ static const uint8_t zmk_hid_report_desc[] = {
     HID_REPORT_SIZE(0x08),
     HID_REPORT_COUNT(6),//CONFIG_ZMK_HID_KEYBOARD_REPORT_SIZE),
     HID_INPUT(ZMK_HID_MAIN_VAL_DATA | ZMK_HID_MAIN_VAL_ARRAY | ZMK_HID_MAIN_VAL_ABS),
-// #else
-// #error "A proper HID report type must be selected"
-// #endif
 
     HID_END_COLLECTION,
     HID_USAGE_PAGE(HID_USAGE_CONSUMER),
@@ -203,26 +148,17 @@ static const uint8_t zmk_hid_report_desc[] = {
     HID_REPORT_ID(ZMK_HID_REPORT_ID_CONSUMER),
     HID_USAGE_PAGE(HID_USAGE_CONSUMER),
 
-// #if IS_ENABLED(CONFIG_ZMK_HID_CONSUMER_REPORT_USAGES_BASIC)
-//     HID_LOGICAL_MIN8(0x00),
-//     HID_LOGICAL_MAX16(0xFF, 0x00),
-//     HID_USAGE_MIN8(0x00),
-//     HID_USAGE_MAX8(0xFF),
-//     HID_REPORT_SIZE(0x08),
-// #elif IS_ENABLED(CONFIG_ZMK_HID_CONSUMER_REPORT_USAGES_FULL)
+    // Consumer report
     HID_LOGICAL_MIN8(0x00),
     HID_LOGICAL_MAX16(0xFF, 0x0F),
     HID_USAGE_MIN8(0x00),
     HID_USAGE_MAX16(0xFF, 0x0F),
     HID_REPORT_SIZE(0x10),
-// #else
-// #error "A proper consumer HID report usage range must be selected"
-// #endif
     HID_REPORT_COUNT(6),//CONFIG_ZMK_HID_CONSUMER_REPORT_SIZE),
     HID_INPUT(ZMK_HID_MAIN_VAL_DATA | ZMK_HID_MAIN_VAL_ARRAY | ZMK_HID_MAIN_VAL_ABS),
     HID_END_COLLECTION,
 
-// #if IS_ENABLED(CONFIG_ZMK_MOUSE)
+    // Mouse report
     HID_USAGE_PAGE(HID_USAGE_GD),
     HID_USAGE(HID_USAGE_GD_MOUSE),
     HID_COLLECTION(HID_COLLECTION_APPLICATION),
@@ -253,59 +189,10 @@ static const uint8_t zmk_hid_report_desc[] = {
     HID_INPUT(ZMK_HID_MAIN_VAL_DATA | ZMK_HID_MAIN_VAL_VAR | ZMK_HID_MAIN_VAL_REL),
     HID_END_COLLECTION,
     HID_END_COLLECTION,
-// #endif // IS_ENABLED(CONFIG_ZMK_MOUSE)
 };
 
 
-/* begin zmk reports */
-typedef uint8_t zmk_mod_flags_t;
-typedef uint8_t zmk_mouse_button_flags_t;
-struct zmk_hid_keyboard_report_body {
-    zmk_mod_flags_t modifiers;
-    uint8_t _reserved;
-// #if IS_ENABLED(CONFIG_ZMK_HID_REPORT_TYPE_NKRO)
-//     uint8_t keys[(ZMK_HID_KEYBOARD_NKRO_MAX_USAGE + 1) / 8];
-// #elif IS_ENABLED(CONFIG_ZMK_HID_REPORT_TYPE_HKRO)
-    uint8_t keys[6];
-// #endif
-} __packed;
-typedef struct zmk_hid_keyboard_report_body zmk_hid_keyboard_report_body_t;
-
-struct zmk_hid_keyboard_report {
-    uint8_t report_id;
-    struct zmk_hid_keyboard_report_body body;
-} __packed;
-
-
-struct zmk_hid_consumer_report_body {
-// #if IS_ENABLED(CONFIG_ZMK_HID_CONSUMER_REPORT_USAGES_BASIC)
-//     uint8_t keys[CONFIG_ZMK_HID_CONSUMER_REPORT_SIZE];
-// #elif IS_ENABLED(CONFIG_ZMK_HID_CONSUMER_REPORT_USAGES_FULL)
-    uint16_t keys[6];
-// #endif
-} __packed;
-
-struct zmk_hid_consumer_report {
-    uint8_t report_id;
-    struct zmk_hid_consumer_report_body body;
-} __packed;
-
-// #if IS_ENABLED(CONFIG_ZMK_MOUSE)
-struct zmk_hid_mouse_report_body {
-    zmk_mouse_button_flags_t buttons;
-    int8_t d_x;
-    int8_t d_y;
-    int8_t d_wheel;
-} __packed;
-typedef struct zmk_hid_mouse_report_body zmk_hid_mouse_report_body_t;
-
-struct zmk_hid_mouse_report {
-    uint8_t report_id;
-    struct zmk_hid_mouse_report_body body;
-} __packed;
-
-// #endif // IS_ENABLED(CONFIG_ZMK_MOUSE)
-
+// buffers
 static struct zmk_hid_keyboard_report keyboard_report = {
 
     .report_id = 0x01, .body = {.modifiers = 0, ._reserved = 0, .keys = {0}}};
@@ -313,19 +200,8 @@ static struct zmk_hid_keyboard_report keyboard_report = {
 static struct zmk_hid_consumer_report consumer_report = {.report_id = 0x02,
                                                          .body = {.keys = {0}}};
 
-#if IS_ENABLED(CONFIG_ZMK_USB_BOOT)
-
-static zmk_hid_boot_report_t boot_report = {.modifiers = 0, ._reserved = 0, .keys = {0}};
-static uint8_t keys_held = 0;
-
-#endif /* IS_ENABLED(CONFIG_ZMK_USB_BOOT) */
-
-// #if IS_ENABLED(CONFIG_ZMK_MOUSE)
-
 static struct zmk_hid_mouse_report mouse_report = {.report_id = 0x03,
                                                    .body = {.buttons = 0}};
-
-// #endif // IS_ENABLED(CONFIG_ZMK_MOUSE)
 
 struct zmk_hid_keyboard_report *zmk_hid_get_keyboard_report(void) {
     return &keyboard_report;
@@ -335,38 +211,8 @@ struct zmk_hid_consumer_report *zmk_hid_get_consumer_report(void) {
     return &consumer_report;
 }
 
-// #if IS_ENABLED(CONFIG_ZMK_MOUSE)
-
 struct zmk_hid_mouse_report *zmk_hid_get_mouse_report(void) {
     return &mouse_report;
-}
-
-// #endif // IS_ENABLED(CONFIG_ZMK_MOUSE)
-
-/* end zmk reports */
-
-static ssize_t read_info(struct bt_conn *conn,
-			  const struct bt_gatt_attr *attr, void *buf,
-			  uint16_t len, uint16_t offset)
-{
-	return bt_gatt_attr_read(conn, attr, buf, len, offset, attr->user_data,
-				 sizeof(struct hids_info));
-}
-
-static ssize_t read_report_map(struct bt_conn *conn,
-			       const struct bt_gatt_attr *attr, void *buf,
-			       uint16_t len, uint16_t offset)
-{
-	return bt_gatt_attr_read(conn, attr, buf, len, offset, report_map,
-				 sizeof(report_map));
-}
-
-static ssize_t read_report(struct bt_conn *conn,
-			   const struct bt_gatt_attr *attr, void *buf,
-			   uint16_t len, uint16_t offset)
-{
-	return bt_gatt_attr_read(conn, attr, buf, len, offset, attr->user_data,
-				 sizeof(struct hids_report));
 }
 
 /* begin zmk read functions */
@@ -395,34 +241,6 @@ static ssize_t read_hids_input_report(struct bt_conn *conn, const struct bt_gatt
                              sizeof(struct zmk_hid_keyboard_report_body));
 }
 
-#if IS_ENABLED(CONFIG_ZMK_HID_INDICATORS)
-static ssize_t write_hids_leds_report(struct bt_conn *conn, const struct bt_gatt_attr *attr,
-                                      const void *buf, uint16_t len, uint16_t offset,
-                                      uint8_t flags) {
-    if (offset != 0) {
-        return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
-    }
-    if (len != sizeof(struct zmk_hid_led_report_body)) {
-        return BT_GATT_ERR(BT_ATT_ERR_INVALID_ATTRIBUTE_LEN);
-    }
-
-    struct zmk_hid_led_report_body *report = (struct zmk_hid_led_report_body *)buf;
-    int profile = zmk_ble_profile_index(bt_conn_get_dst(conn));
-    if (profile < 0) {
-        return BT_GATT_ERR(BT_ATT_ERR_UNLIKELY);
-    }
-
-    struct zmk_endpoint_instance endpoint = {.transport = ZMK_TRANSPORT_BLE,
-                                             .ble = {
-                                                 .profile_index = profile,
-                                             }};
-    zmk_hid_indicators_process_report(report, endpoint);
-
-    return len;
-}
-
-#endif // IS_ENABLED(CONFIG_ZMK_HID_INDICATORS)
-
 static ssize_t read_hids_consumer_input_report(struct bt_conn *conn,
                                                const struct bt_gatt_attr *attr, void *buf,
                                                uint16_t len, uint16_t offset) {
@@ -431,14 +249,12 @@ static ssize_t read_hids_consumer_input_report(struct bt_conn *conn,
                              sizeof(struct zmk_hid_consumer_report_body));
 }
 
-// #if IS_ENABLED(CONFIG_ZMK_MOUSE)
 static ssize_t read_hids_mouse_input_report(struct bt_conn *conn, const struct bt_gatt_attr *attr,
                                             void *buf, uint16_t len, uint16_t offset) {
     struct zmk_hid_mouse_report_body *report_body = &zmk_hid_get_mouse_report()->body;
     return bt_gatt_attr_read(conn, attr, buf, len, offset, report_body,
                              sizeof(struct zmk_hid_mouse_report_body));
 }
-// #endif // IS_ENABLED(CONFIG_ZMK_MOUSE)
 /* end zmk read functions */
 
 
@@ -448,12 +264,6 @@ static void input_ccc_changed(const struct bt_gatt_attr *attr, uint16_t value)
 	simulate_input = (value == BT_GATT_CCC_NOTIFY) ? 1 : 0;
 }
 
-static ssize_t read_input_report(struct bt_conn *conn,
-				 const struct bt_gatt_attr *attr, void *buf,
-				 uint16_t len, uint16_t offset)
-{
-	return bt_gatt_attr_read(conn, attr, buf, len, offset, NULL, 0);
-}
 
 static ssize_t write_ctrl_point(struct bt_conn *conn,
 				const struct bt_gatt_attr *attr,
@@ -482,26 +292,6 @@ static ssize_t write_ctrl_point(struct bt_conn *conn,
 #endif
 
 /* HID Service Declaration */
-// BT_GATT_SERVICE_DEFINE(hog_svc,
-// 	BT_GATT_PRIMARY_SERVICE(BT_UUID_HIDS),
-// 	BT_GATT_CHARACTERISTIC(BT_UUID_HIDS_INFO, BT_GATT_CHRC_READ,
-// 			       BT_GATT_PERM_READ, read_info, NULL, &info),
-// 	BT_GATT_CHARACTERISTIC(BT_UUID_HIDS_REPORT_MAP, BT_GATT_CHRC_READ,
-// 			       BT_GATT_PERM_READ, read_report_map, NULL, NULL),
-// 	BT_GATT_CHARACTERISTIC(BT_UUID_HIDS_REPORT,
-// 			       BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY,
-// 			       SAMPLE_BT_PERM_READ,
-// 			       read_input_report, NULL, NULL),
-// 	BT_GATT_CCC(input_ccc_changed,
-// 		    SAMPLE_BT_PERM_READ | SAMPLE_BT_PERM_WRITE),
-// 	BT_GATT_DESCRIPTOR(BT_UUID_HIDS_REPORT_REF, BT_GATT_PERM_READ,
-// 			   read_report, NULL, &input),
-// 	BT_GATT_CHARACTERISTIC(BT_UUID_HIDS_CTRL_POINT,
-// 			       BT_GATT_CHRC_WRITE_WITHOUT_RESP,
-// 			       BT_GATT_PERM_WRITE,
-// 			       NULL, write_ctrl_point, &ctrl_point),
-// );
-
 BT_GATT_SERVICE_DEFINE(
     hog_svc, BT_GATT_PRIMARY_SERVICE(BT_UUID_HIDS),
     //    BT_GATT_CHARACTERISTIC(BT_UUID_HIDS_PROTOCOL_MODE, BT_GATT_CHRC_WRITE_WITHOUT_RESP,
@@ -523,22 +313,11 @@ BT_GATT_SERVICE_DEFINE(
     BT_GATT_DESCRIPTOR(BT_UUID_HIDS_REPORT_REF, BT_GATT_PERM_READ_ENCRYPT, read_hids_report_ref,
                        NULL, &consumer_input),
 
-// #if IS_ENABLED(CONFIG_ZMK_MOUSE)
     BT_GATT_CHARACTERISTIC(BT_UUID_HIDS_REPORT, BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY,
                            BT_GATT_PERM_READ_ENCRYPT, read_hids_mouse_input_report, NULL, NULL),
     BT_GATT_CCC(input_ccc_changed, BT_GATT_PERM_READ_ENCRYPT | BT_GATT_PERM_WRITE_ENCRYPT),
     BT_GATT_DESCRIPTOR(BT_UUID_HIDS_REPORT_REF, BT_GATT_PERM_READ_ENCRYPT, read_hids_report_ref,
                        NULL, &mouse_input),
-// #endif // IS_ENABLED(CONFIG_ZMK_MOUSE)
-
-#if IS_ENABLED(CONFIG_ZMK_HID_INDICATORS)
-    BT_GATT_CHARACTERISTIC(BT_UUID_HIDS_REPORT,
-                           BT_GATT_CHRC_READ | BT_GATT_CHRC_WRITE | BT_GATT_CHRC_WRITE_WITHOUT_RESP,
-                           BT_GATT_PERM_READ_ENCRYPT | BT_GATT_PERM_WRITE_ENCRYPT, NULL,
-                           write_hids_leds_report, NULL),
-    BT_GATT_DESCRIPTOR(BT_UUID_HIDS_REPORT_REF, BT_GATT_PERM_READ_ENCRYPT, read_hids_report_ref,
-                       NULL, &led_indicators),
-#endif // IS_ENABLED(CONFIG_ZMK_HID_INDICATORS)
 
     BT_GATT_CHARACTERISTIC(BT_UUID_HIDS_CTRL_POINT, BT_GATT_CHRC_WRITE_WITHOUT_RESP,
                            BT_GATT_PERM_WRITE, NULL, write_ctrl_point, &ctrl_point));
@@ -689,18 +468,15 @@ uint8_t press(uint8_t k, zmk_hid_keyboard_report_body_t *report)
 	if (k >= 136) {			// it's a non-printing key (not a modifier)
 		k = k - 136;
 	} else if (k >= 128) {	// it's a modifier key
-		// _keyReport.modifiers |= (1<<(k-128));
         report->modifiers |= (1 << (k - 128));
 		k = 0;
 	} else {				// it's a printing key
 		k = *(_asciimap + k);
 		if (!k) {
-			// setWriteError();
 			return 0;
 		}
 		if (k & 0x80) {						// it's a capital letter or other character reached with shift
-			// _keyReport.modifiers |= 0x02;	// the left shift modifier
-            report->modifiers |= 0x02;
+            report->modifiers |= 0x02; // the left shift modifier
 			k &= 0x7F;
 		}
 	}
@@ -718,7 +494,6 @@ uint8_t press(uint8_t k, zmk_hid_keyboard_report_body_t *report)
 			}
 		}
 		if (i == 6) {
-			// setWriteError();
 			return 0;
 		}
 	}
@@ -731,7 +506,6 @@ uint8_t release(uint8_t k, zmk_hid_keyboard_report_body_t *report)
     if (k >= 136) {			// it's a non-printing key (not a modifier)
         k = k - 136;
     } else if (k >= 128) {	// it's a modifier key
-        // _keyReport.modifiers &= ~(1<<(k-128));
         report->modifiers &= ~(1 << (k - 128));
         k = 0;
     } else {				// it's a printing key
@@ -740,8 +514,7 @@ uint8_t release(uint8_t k, zmk_hid_keyboard_report_body_t *report)
             return 0;
         }
         if (k & 0x80) {						// it's a capital letter or other character reached with shift
-            // _keyReport.modifiers |= 0x02;	// the left shift modifier
-            report->modifiers |= 0x02;
+            report->modifiers |= 0x02; // the left shift modifier
             k &= 0x7F;
         }
     }
@@ -785,7 +558,6 @@ void write_string(const char *str)
         write(*str++);
     }
 }
-
 
 void hog_button_loop(void)
 {

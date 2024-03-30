@@ -10,4 +10,21 @@ config SAMPLE_BT_USE_AUTHENTICATION
 	  Enable the passkey authentication callback and register the GATT
 	  read and write attributes as authentication required.
 
+menu "APP CONFIG"
+config SHIELD_SSD1306_128X64
+    def_bool y
+    prompt "SSD1306 128x64 OLED Display DO NOT CHANGE"
+    help
+        "This is set to default to true to activate the ssd1306 related configurations"
+endmenu
+# Your application configuration options go here
+
+# Sources Kconfig.zephyr in the Zephyr root directory.
+#
+# Note: All 'source' statements work relative to the Zephyr root directory (due
+# to the $srctree environment variable being set to $ZEPHYR_BASE). If you want
+# to 'source' relative to the current Kconfig file instead, use 'rsource' (or a
+# path relative to the Zephyr root).
+
+source "boards/shields/ssd1306/Kconfig.defconfig"
 source "Kconfig.zephyr"
