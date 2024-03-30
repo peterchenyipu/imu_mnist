@@ -1,3 +1,5 @@
+#ifndef HOG_H
+#define HOG_H
 /** @file
  *  @brief HoG Service sample
  */
@@ -89,3 +91,5 @@ void write_string(const char *str);
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* HOG_H */

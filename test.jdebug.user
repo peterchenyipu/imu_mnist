@@ -1,0 +1,36 @@
+
+
+OpenDocument="test.jdebug", FilePath="/home/peteop/zephyrproject/3651ws/ble_hid_app/test.jdebug", Line=0
+OpenDocument="main.c", FilePath="/home/peteop/zephyrproject/3651ws/ble_hid_app/src/main.c", Line=94
+OpenDocument="lv_txt.h", FilePath="/home/peteop/zephyrproject/modules/lib/gui/lvgl/src/misc/lv_txt.h", Line=171
+OpenDocument="FusionMath.h", FilePath="/home/peteop/zephyrproject/3651ws/ble_hid_app/include/Fusion/FusionMath.h", Line=438
+OpenDocument="fatal.c", FilePath="/home/peteop/zephyrproject/zephyr/arch/arm/core/fatal.c", Line=51
+OpenDocument="swap_helper.S", FilePath="/home/peteop/zephyrproject/zephyr/arch/arm/core/cortex_m/swap_helper.S", Line=426
+OpenDocument="fatal.c", FilePath="/home/peteop/zephyrproject/zephyr/kernel/fatal.c", Line=22
+OpenDocument="imu.c", FilePath="/home/peteop/zephyrproject/3651ws/ble_hid_app/src/imu.c", Line=0
+OpenDocument="cpu_idle.S", FilePath="/home/peteop/zephyrproject/zephyr/arch/arm/core/cortex_m/cpu_idle.S", Line=134
+OpenToolbar="Debug", Floating=0, x=0, y=0
+OpenWindow="Call Stack", DockArea=RIGHT, x=0, y=2, w=848, h=374, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Registers 1", DockArea=RIGHT, x=0, y=3, w=848, h=311, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, FilteredItems=[], RefreshRate=1
+OpenWindow="Disassembly", DockArea=RIGHT, x=0, y=0, w=848, h=344, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Local Data", DockArea=LEFT, x=0, y=1, w=1193, h=262, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Watched Data 1", DockArea=LEFT, x=0, y=0, w=1193, h=817, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Functions", DockArea=LEFT, x=0, y=2, w=1193, h=262, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Data Sampling", DockArea=BOTTOM, x=1, y=0, w=1087, h=545, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, VisibleTab=0, UniformSampleSpacing=0
+OpenWindow="Timeline", DockArea=BOTTOM, x=2, y=0, w=1233, h=545, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=1, DataPaneShown=1, PowerPaneShown=1, CodePaneShown=1, PinCursor="Cursor Movable", TimePerDiv="1 ns / Div", TimeStampFormat="Time", DataGraphDrawAsPoints=0, DataGraphLegendShown=1, DataGraphUniformSampleSpacing=0, DataGraphLegendPosition="915;0", DataGraphShowNamesAtCursor=0, PowerGraphDrawAsPoints=0, PowerGraphLegendShown=1, PowerGraphAvgFilterTime=Off, PowerGraphAvgFilterLen=Off, PowerGraphUniformSampleSpacing=0, PowerGraphLegendPosition="919;0", CodeGraphLegendShown=1, CodeGraphLegendPosition="841;0"
+OpenWindow="Console", DockArea=BOTTOM, x=0, y=0, w=1076, h=545, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="RTOS", DockArea=RIGHT, x=0, y=1, w=848, h=306, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, Showing=""
+SmartViewPlugin="", Page="", Toolbar="Hidden", Window="SmartView 1"
+TableHeader="Local Data", SortCol="Name", SortOrder="DESCENDING", VisibleCols=["Name";"Value";"Location";"Size";"Type";"Scope"], ColWidths=[144;276;100;100;154;419]
+TableHeader="Functions", SortCol="Name", SortOrder="DESCENDING", VisibleCols=["Name";"Address";"Size";"#Insts";"Source"], ColWidths=[1998;100;100;100;1470]
+TableHeader="Call Stack", SortCol="Function", SortOrder="ASCENDING", VisibleCols=["Function";"Stack Frame";"Source";"PC";"Return Address";"Stack Used"], ColWidths=[107;112;164;100;168;197]
+TableHeader="Data Sampling Table", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time"], ColWidths=[100;100]
+TableHeader="Data Sampling Setup", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Type";"Value";"Min";"Max";"Average";"# Changes";"Min. Change";"Max. Change"], ColWidths=[100;100;100;100;100;114;141;161;171]
+TableHeader="Power Sampling", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time";"Ch 0"], ColWidths=[100;100;100]
+TableHeader="Registers 1", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Description"], ColWidths=[100;105;643]
+TableHeader="Watched Data 1", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh"], ColWidths=[282;617;100;194]
+TableHeader="RegisterSelectionDialog", SortCol="None", SortOrder="ASCENDING", VisibleCols=[], ColWidths=[]
+TableHeader="TargetExceptionDialog", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Address";"Description"], ColWidths=[26;26;26;36]
+WatchedExpression="accel_x_out", RefreshRate=5, Window=Watched Data 1
+WatchedExpression="count", RefreshRate=5, Window=Watched Data 1
+WatchedExpression="reason", Window=Watched Data 1
