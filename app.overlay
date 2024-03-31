@@ -41,3 +41,6 @@
 		prechargep = <0x22>;
 	};
 };
+&uart0 {
+    current-speed = <460800>;
+};

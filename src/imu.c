@@ -3,6 +3,7 @@
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/kernel.h>
 #include <imu.h>
+#include <zephyr/drivers/uart.h>
 
 FusionEuler euler;
 
@@ -27,12 +28,6 @@ static int lsm6dsl_trig_cnt;
 
 static struct sensor_value accel_x_out, accel_y_out, accel_z_out;
 static struct sensor_value gyro_x_out, gyro_y_out, gyro_z_out;
-#if defined(CONFIG_LSM6DSL_EXT0_LIS2MDL)
-static struct sensor_value magn_x_out, magn_y_out, magn_z_out;
-#endif
-#if defined(CONFIG_LSM6DSL_EXT0_LPS22HB)
-static struct sensor_value press_out, temp_out;
-#endif
 
 #ifdef CONFIG_LSM6DSL_TRIGGER
 static void lsm6dsl_trigger_handler(const struct device *dev,
@@ -40,12 +35,7 @@ static void lsm6dsl_trigger_handler(const struct device *dev,
 {
 	static struct sensor_value accel_x, accel_y, accel_z;
 	static struct sensor_value gyro_x, gyro_y, gyro_z;
-#if defined(CONFIG_LSM6DSL_EXT0_LIS2MDL)
-	static struct sensor_value magn_x, magn_y, magn_z;
-#endif
-#if defined(CONFIG_LSM6DSL_EXT0_LPS22HB)
-	static struct sensor_value press, temp;
-#endif
+
 	lsm6dsl_trig_cnt++;
 
 	sensor_sample_fetch_chan(dev, SENSOR_CHAN_ACCEL_XYZ);
@@ -59,50 +49,43 @@ static void lsm6dsl_trigger_handler(const struct device *dev,
 	sensor_channel_get(dev, SENSOR_CHAN_GYRO_Y, &gyro_y);
 	sensor_channel_get(dev, SENSOR_CHAN_GYRO_Z, &gyro_z);
 
-#if defined(CONFIG_LSM6DSL_EXT0_LIS2MDL)
-	/* lsm6dsl external magn */
-	sensor_sample_fetch_chan(dev, SENSOR_CHAN_MAGN_XYZ);
-	sensor_channel_get(dev, SENSOR_CHAN_MAGN_X, &magn_x);
-	sensor_channel_get(dev, SENSOR_CHAN_MAGN_Y, &magn_y);
-	sensor_channel_get(dev, SENSOR_CHAN_MAGN_Z, &magn_z);
-#endif
+	accel_x_out = accel_x;
+	accel_y_out = accel_y;
+	accel_z_out = accel_z;
 
-#if defined(CONFIG_LSM6DSL_EXT0_LPS22HB)
-	/* lsm6dsl external press/temp */
-	sensor_sample_fetch_chan(dev, SENSOR_CHAN_PRESS);
-	sensor_channel_get(dev, SENSOR_CHAN_PRESS, &press);
-
-	sensor_sample_fetch_chan(dev, SENSOR_CHAN_AMBIENT_TEMP);
-	sensor_channel_get(dev, SENSOR_CHAN_AMBIENT_TEMP, &temp);
-#endif
-
-	// if (print_samples) {
-	// 	print_samples = 0;
-
-		accel_x_out = accel_x;
-		accel_y_out = accel_y;
-		accel_z_out = accel_z;
-
-		gyro_x_out = gyro_x;
-		gyro_y_out = gyro_y;
-		gyro_z_out = gyro_z;
-
-#if defined(CONFIG_LSM6DSL_EXT0_LIS2MDL)
-		magn_x_out = magn_x;
-		magn_y_out = magn_y;
-		magn_z_out = magn_z;
-#endif
-
-#if defined(CONFIG_LSM6DSL_EXT0_LPS22HB)
-		press_out = press;
-		temp_out = temp;
-#endif
-	// }
+	gyro_x_out = gyro_x;
+	gyro_y_out = gyro_y;
+	gyro_z_out = gyro_z;
 
 }
 #endif
 
 #define ATL_LOCAL_G (9.80665f)
+
+#define UART_DEVICE_NODE DT_NODELABEL(xiao_serial)
+static const struct device *const uart_dev = DEVICE_DT_GET(UART_DEVICE_NODE);
+
+bool uartSending = false;
+void uart_dma_cb(const struct device *dev, struct uart_event *evt, void *user_data)
+{
+	if (evt->type == UART_TX_DONE) {
+		uartSending = false;
+	} else if (evt->type == UART_TX_ABORTED) {
+		uartSending = false;
+	}
+}
+
+IMU imu = {0};
+
+#define CH_COUNT 7
+struct Frame {
+	float fdata[CH_COUNT];
+	unsigned char tail[4];
+} __attribute__((packed));
+
+struct Frame frame = {
+	.tail = {0x00, 0x00, 0x80, 0x7f}
+};
 
 
 int imu_task(void)
@@ -155,7 +138,33 @@ int imu_task(void)
     uint32_t count = 0;
 
 	FusionAhrs ahrs;
+	// TODO add calibration here
     FusionAhrsInitialise(&ahrs);
+
+	// prepare the UART
+	if (!device_is_ready(uart_dev)) {
+		printk("UART device not ready\n");
+		while (1)
+			;
+	}
+
+	int ret = uart_callback_set(uart_dev, uart_dma_cb, NULL);
+	if (ret < 0) {
+		if (ret == -ENOTSUP) {
+			printk("Async UART API support not enabled\n");
+		} else if (ret == -ENOSYS) {
+			printk("UART device does not support Async API\n");
+		} else {
+			printk("Error setting UART callback: %d\n", ret);
+		}
+		while (1) {
+			printk("Error setting UART callback\n");
+			k_msleep(1000);
+		}
+	}
+
+	sprintf(out_str, "hello world\n");
+	uart_tx(uart_dev, out_str, strlen(out_str), SYS_FOREVER_US);
 
     while (1)
     {
@@ -170,18 +179,29 @@ int imu_task(void)
         //     // log out_str
         //     printk("%s", out_str);
     	// }
+		
+		// Update IMU
+		// accel in m/s^2, gyro in rad/s
+		imu.raw.ax = out_ev(&accel_x_out);
+		imu.raw.ay = out_ev(&accel_y_out);
+		imu.raw.az = out_ev(&accel_z_out);
+		imu.raw.gx = out_ev(&gyro_x_out);
+		imu.raw.gy = out_ev(&gyro_y_out);
+		imu.raw.gz = out_ev(&gyro_z_out);
+
+
 		const FusionVector accelerometer = {
 			.array = {
-				out_ev(&accel_x_out)/ATL_LOCAL_G,
-				out_ev(&accel_y_out)/ATL_LOCAL_G,
-				out_ev(&accel_z_out)/ATL_LOCAL_G
+				imu.raw.ax / ATL_LOCAL_G,
+				imu.raw.ay / ATL_LOCAL_G,
+				imu.raw.az / ATL_LOCAL_G
 			}
 		};
         const FusionVector gyroscope = {
 			.array = {
-				out_ev(&gyro_x_out) * 180.0f / M_PI,
-				out_ev(&gyro_y_out) * 180.0f / M_PI,
-				out_ev(&gyro_z_out) * 180.0f / M_PI
+				imu.raw.gx * 180.0f / M_PI,
+				imu.raw.gy * 180.0f / M_PI,
+				imu.raw.gz * 180.0f / M_PI
 			}
 		};
 
@@ -189,11 +209,45 @@ int imu_task(void)
 
 		const FusionQuaternion quaternion = FusionAhrsGetQuaternion(&ahrs);
 		euler = FusionQuaternionToEuler(quaternion);
+
+		// update quaternion
+		imu.state.qw = quaternion.element.w;
+		imu.state.qx = quaternion.element.x;
+		imu.state.qy = quaternion.element.y;
+		imu.state.qz = quaternion.element.z;
+
+		// perform dead reckoning
+		FusionVector accel = FusionAhrsGetEarthAcceleration(&ahrs);
+		imu.state.ax = accel.axis.x;
+		imu.state.ay = accel.axis.y;
+		imu.state.az = accel.axis.z;
+
+		imu.state.vx += imu.state.ax * SAMPLE_PERIOD;
+		imu.state.vy += imu.state.ay * SAMPLE_PERIOD;
+		imu.state.vz += imu.state.az * SAMPLE_PERIOD;
+
+		imu.state.px += imu.state.vx * SAMPLE_PERIOD;
+		imu.state.py += imu.state.vy * SAMPLE_PERIOD;
+		imu.state.pz += imu.state.vz * SAMPLE_PERIOD;
+
+		// send position over UART
+		// sprintf(out_str, "p x:%.1f y:%.1f z:%.1f\n", imu.state.px, imu.state.py, imu.state.pz);
+		if (!uartSending) {
+			uartSending = true;
+			frame.fdata[0] = imu.state.qw;
+			frame.fdata[1] = imu.state.qx;
+			frame.fdata[2] = imu.state.qy;
+			frame.fdata[3] = imu.state.qz;
+			sprintf(out_str, "px:%.6f,%.6f,%.6f,%.6f\n\0", imu.state.qw, imu.state.qx, imu.state.qy, imu.state.qz);
+			uart_tx(uart_dev, out_str, strlen(out_str), SYS_FOREVER_US);
+			// uart_tx(uart_dev, (const char *)&frame, sizeof(frame), SYS_FOREVER_US);
+		}
+
         count++;
         k_msleep(1000 * SAMPLE_PERIOD);
     }
 }
 
-K_THREAD_DEFINE(imu_tid, 8192*10,
+K_THREAD_DEFINE(imu_tid, 128 * 20,
                 imu_task, NULL, NULL, NULL,
                 5, 0, 0);
