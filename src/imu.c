@@ -218,9 +218,19 @@ int imu_task(void)
 
 		// perform dead reckoning
 		FusionVector accel = FusionAhrsGetEarthAcceleration(&ahrs);
-		imu.state.ax = accel.axis.x;
-		imu.state.ay = accel.axis.y;
-		imu.state.az = accel.axis.z;
+		// convert to m/s^2
+		imu.state.ax = accel.axis.x * ATL_LOCAL_G;
+		imu.state.ay = accel.axis.y * ATL_LOCAL_G;
+		imu.state.az = accel.axis.z * ATL_LOCAL_G;
+
+		if (fabs(imu.state.ax*imu.state.ax + imu.state.ay*imu.state.ay + imu.state.az*imu.state.az) < 1) {
+			imu.state.ax = 0;
+			imu.state.ay = 0;
+			imu.state.az = 0;
+			imu.state.vx *= 0.9;
+			imu.state.vy *= 0.9;
+			imu.state.vz *= 0.9;
+		}
 
 		imu.state.vx += imu.state.ax * SAMPLE_PERIOD;
 		imu.state.vy += imu.state.ay * SAMPLE_PERIOD;
@@ -238,7 +248,8 @@ int imu_task(void)
 			frame.fdata[1] = imu.state.qx;
 			frame.fdata[2] = imu.state.qy;
 			frame.fdata[3] = imu.state.qz;
-			sprintf(out_str, "px:%.6f,%.6f,%.6f,%.6f\n\0", imu.state.qw, imu.state.qx, imu.state.qy, imu.state.qz);
+			// sprintf(out_str, "px:%.6f,%.6f,%.6f,%.6f\n\0", imu.state.qw, imu.state.qx, imu.state.qy, imu.state.qz);
+			sprintf(out_str, "px:%.6f,%.6f,%.6f\n\0", imu.state.px, imu.state.py, imu.state.pz);
 			uart_tx(uart_dev, out_str, strlen(out_str), SYS_FOREVER_US);
 			// uart_tx(uart_dev, (const char *)&frame, sizeof(frame), SYS_FOREVER_US);
 		}
