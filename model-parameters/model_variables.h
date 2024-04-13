@@ -25,7 +25,7 @@
 #include <stdint.h>
 #include "model_metadata.h"
 
-#include "tflite-model/tflite_learn_11_compiled.h"
+#include "tflite-model/tflite_learn_12_compiled.h"
 #include "edge-impulse-sdk/classifier/ei_model_types.h"
 #include "edge-impulse-sdk/classifier/inferencing_engines/engines.h"
 
@@ -53,19 +53,19 @@ ei_model_dsp_t ei_dsp_blocks[ei_dsp_blocks_size] = {
         nullptr, // factory function
     }
 };
-const ei_config_tflite_eon_graph_t ei_config_tflite_graph_11 = {
+const ei_config_tflite_eon_graph_t ei_config_tflite_graph_12 = {
     .implementation_version = 1,
-    .model_init = &tflite_learn_11_init,
-    .model_invoke = &tflite_learn_11_invoke,
-    .model_reset = &tflite_learn_11_reset,
-    .model_input = &tflite_learn_11_input,
-    .model_output = &tflite_learn_11_output,
+    .model_init = &tflite_learn_12_init,
+    .model_invoke = &tflite_learn_12_invoke,
+    .model_reset = &tflite_learn_12_reset,
+    .model_input = &tflite_learn_12_input,
+    .model_output = &tflite_learn_12_output,
 };
 
-const ei_learning_block_config_tflite_graph_t ei_learning_block_config_11 = {
+const ei_learning_block_config_tflite_graph_t ei_learning_block_config_12 = {
     .implementation_version = 1,
     .classification_mode = EI_CLASSIFIER_CLASSIFICATION_MODE_CLASSIFICATION,
-    .block_id = 11,
+    .block_id = 12,
     .object_detection = 0,
     .object_detection_last_layer = EI_CLASSIFIER_LAST_LAYER_UNKNOWN,
     .output_data_tensor = 0,
@@ -74,21 +74,21 @@ const ei_learning_block_config_tflite_graph_t ei_learning_block_config_11 = {
     .threshold = 0,
     .quantized = 1,
     .compiled = 1,
-    .graph_config = (void*)&ei_config_tflite_graph_11
+    .graph_config = (void*)&ei_config_tflite_graph_12
 };
 
 const size_t ei_learning_blocks_size = 1;
-const uint32_t ei_learning_block_11_inputs[1] = { 8 };
-const uint32_t ei_learning_block_11_inputs_size = 1;
+const uint32_t ei_learning_block_12_inputs[1] = { 8 };
+const uint32_t ei_learning_block_12_inputs_size = 1;
 const ei_learning_block_t ei_learning_blocks[ei_learning_blocks_size] = {
     {
-        11,
+        12,
         false,
         &run_nn_inference,
-        (void*)&ei_learning_block_config_11,
+        (void*)&ei_learning_block_config_12,
         EI_CLASSIFIER_IMAGE_SCALING_NONE,
-        ei_learning_block_11_inputs,
-        ei_learning_block_11_inputs_size,
+        ei_learning_block_12_inputs,
+        ei_learning_block_12_inputs_size,
         5
     },
 };
@@ -110,7 +110,7 @@ const ei_impulse_t impulse_365713_0 = {
     .project_id = 365713,
     .project_owner = "Yipu Chen",
     .project_name = "peteop1-project-1",
-    .deploy_version = 2,
+    .deploy_version = 3,
 
     .nn_input_frame_size = 1800,
     .raw_sample_count = 300,
