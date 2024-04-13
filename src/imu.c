@@ -1,6 +1,7 @@
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/sensor.h>
+#include <zephyr/drivers/gpio.h>
 #include <zephyr/kernel.h>
 #include <imu.h>
 #include <zephyr/drivers/uart.h>
@@ -92,6 +93,7 @@ float features[1800] = {0};
 bool features_ready = false;
 
 static int features_counter = 0;
+#define SW0_NODE DT_ALIAS(sw0)
 
 int imu_task(void)
 {
@@ -137,8 +139,13 @@ int imu_task(void)
 		printk("Sensor sample update error\n");
 		return 0;
 	}
+	
+	const struct gpio_dt_spec sw0 = GPIO_DT_SPEC_GET(SW0_NODE, gpios);
 
-	printk("Sampling accelerometer/gyro... (press button to print data)\n");
+	gpio_pin_configure_dt(&sw0, GPIO_INPUT);
+	int last_state = 0;
+
+	printk("Sampling accelerometer/gyro... (press button to start)\n");
 
     uint32_t count = 0;
 
@@ -170,15 +177,30 @@ int imu_task(void)
 
 	sprintf(out_str, "hello world\n");
 	uart_tx(uart_dev, out_str, strlen(out_str), SYS_FOREVER_US);
+	bool collecting = false;
 
     while (1)
     {
 		if (features_ready)
 		{
-			// skip
+			// doing inference, skip
+			k_msleep(200);
+			last_state = gpio_pin_get_dt(&sw0);
+			continue;
+		}
+
+		int button_state = gpio_pin_get_dt(&sw0);
+		if (button_state == 1 && last_state == 0) {
+			printk("Start Collection\n");
+			collecting = true;
+		}
+
+		if (!collecting) {
+			last_state = button_state;
 			k_msleep(200);
 			continue;
 		}
+
 
 		uint32_t start = k_cycle_get_32();
         // if ((count % 10) == 0U) {
@@ -214,6 +236,7 @@ int imu_task(void)
 		if (features_counter >= 300) {
 			features_ready = true;
 			features_counter = 0;
+			collecting = false;
 			printk("Features ready\n");
 		}
 

@@ -9,6 +9,7 @@
 #include "edge-impulse-sdk/dsp/numpy.hpp"
 #include <nrfx_clock.h>
 #include <imu.h>
+#include <hog.h>
 
 // static const float features[] = {
 //     // copy raw features here (for example from the 'Live classification' page)
@@ -43,7 +44,7 @@ int main() {
     while (1) {
         if (!features_ready)
         {
-            printk("Waiting for features...\n");
+            // printk("Waiting for features...\n");
             k_msleep(100);
             continue;
         }
@@ -74,10 +75,18 @@ int main() {
             printk("    No objects found\n");
         }
 #else
+        int largest_probability_index = 0;
+        float largest_probability = 0;
         for (size_t ix = 0; ix < EI_CLASSIFIER_LABEL_COUNT; ix++) {
             printk("    %s: %.5f\n", result.classification[ix].label,
                                     result.classification[ix].value);
+            if (result.classification[ix].value > largest_probability) {
+                largest_probability = result.classification[ix].value;
+                largest_probability_index = ix;
+            }
         }
+        write(largest_probability_index + '1');
+
 #if EI_CLASSIFIER_HAS_ANOMALY == 1
         printk("    anomaly score: %.3f\n", result.anomaly);
 #endif

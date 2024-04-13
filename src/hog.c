@@ -561,10 +561,10 @@ void write_string(const char *str)
 
 void hog_button_loop(void)
 {
-#if DT_NODE_HAS_STATUS(SW0_NODE, okay)
-	const struct gpio_dt_spec sw0 = GPIO_DT_SPEC_GET(SW0_NODE, gpios);
+// #if DT_NODE_HAS_STATUS(SW0_NODE, okay)
+// 	const struct gpio_dt_spec sw0 = GPIO_DT_SPEC_GET(SW0_NODE, gpios);
 
-	gpio_pin_configure_dt(&sw0, GPIO_INPUT);
+// 	gpio_pin_configure_dt(&sw0, GPIO_INPUT);
     char asciiChar = ' ';
     int last_button_state = 0;
 
@@ -580,20 +580,20 @@ void hog_button_loop(void)
             keyboard_report.keys[3] = 0x00;
             keyboard_report.keys[4] = 0x00;
             keyboard_report.keys[5] = 0x00;
-            int button_state = gpio_pin_get_dt(&sw0);
+            // int button_state = gpio_pin_get_dt(&sw0);
 
-            if (last_button_state == 0 && button_state == 1) {
-                write_string("Hello World\n\n\0");
-                // write(asciiChar);
-                // printk("Button pressed\n");
-                // printk("asciiChar: %c\n", asciiChar);
-                // printk("asciiChar: %d\n", asciiChar);
-                // asciiChar++;
-            }
+            // if (last_button_state == 0 && button_state == 1) {
+            //     write_string("Hello World\n\n\0");
+            //     // write(asciiChar);
+            //     // printk("Button pressed\n");
+            //     // printk("asciiChar: %c\n", asciiChar);
+            //     // printk("asciiChar: %d\n", asciiChar);
+            //     // asciiChar++;
+            // }
 
             // bt_gatt_notify(NULL, &hog_svc.attrs[5],
             //                 &keyboard_report, sizeof(keyboard_report)); // keyboard report template
-            last_button_state = button_state;
+            // last_button_state = button_state;
             
 
             // if (asciiChar > 'z') {
@@ -625,7 +625,7 @@ void hog_button_loop(void)
 		}
 		k_sleep(K_MSEC(100));
 	}
-#endif
+// #endif
 }
 
 
