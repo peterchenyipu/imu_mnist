@@ -29,7 +29,7 @@
 #include "edge-impulse-sdk/classifier/ei_model_types.h"
 #include "edge-impulse-sdk/classifier/inferencing_engines/engines.h"
 
-const char* ei_classifier_inferencing_categories[] = { "1", "2", "3", "4", "5" };
+const char* ei_classifier_inferencing_categories[] = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" };
 
 uint8_t ei_dsp_config_8_axes[] = { 0, 1, 2, 3, 4, 5 };
 const uint32_t ei_dsp_config_8_axes_size = 6;
@@ -89,7 +89,7 @@ const ei_learning_block_t ei_learning_blocks[ei_learning_blocks_size] = {
         EI_CLASSIFIER_IMAGE_SCALING_NONE,
         ei_learning_block_12_inputs,
         ei_learning_block_12_inputs_size,
-        5
+        10
     },
 };
 
@@ -110,7 +110,7 @@ const ei_impulse_t impulse_365713_0 = {
     .project_id = 365713,
     .project_owner = "Yipu Chen",
     .project_name = "peteop1-project-1",
-    .deploy_version = 3,
+    .deploy_version = 5,
 
     .nn_input_frame_size = 1800,
     .raw_sample_count = 300,
@@ -127,7 +127,7 @@ const ei_impulse_t impulse_365713_0 = {
     .object_detection_count = 0,
     .fomo_output_size = 0,
     
-    .tflite_output_features_count = 5,
+    .tflite_output_features_count = 10,
     .learning_blocks_size = ei_learning_blocks_size,
     .learning_blocks = ei_learning_blocks,
 
@@ -139,7 +139,7 @@ const ei_impulse_t impulse_365713_0 = {
     .slices_per_model_window = 4,
 
     .has_anomaly = EI_ANOMALY_TYPE_UNKNOWN,
-    .label_count = 5,
+    .label_count = 10,
     .calibration = ei_calibration,
     .categories = ei_classifier_inferencing_categories,
     .object_detection_nms = ei_object_detection_nms

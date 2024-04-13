@@ -85,7 +85,7 @@ int main() {
                 largest_probability_index = ix;
             }
         }
-        write(largest_probability_index + '1');
+        write(largest_probability_index + '0');
 
 #if EI_CLASSIFIER_HAS_ANOMALY == 1
         printk("    anomaly score: %.3f\n", result.anomaly);
