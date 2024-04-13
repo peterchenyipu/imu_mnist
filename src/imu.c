@@ -88,6 +88,11 @@ struct Frame frame = {
 };
 
 
+float features[1800] = {0};
+bool features_ready = false;
+
+static int features_counter = 0;
+
 int imu_task(void)
 {
     int cnt = 0;
@@ -168,6 +173,13 @@ int imu_task(void)
 
     while (1)
     {
+		if (features_ready)
+		{
+			// skip
+			k_msleep(200);
+			continue;
+		}
+
 		uint32_t start = k_cycle_get_32();
         // if ((count % 10) == 0U) {
 		// 	sprintf(out_str, "a x:%.1f y:%.1f z:%.1f\ng x:%.1f y:%.1f z:%.1f\n",
@@ -189,6 +201,21 @@ int imu_task(void)
 		imu.raw.gx = out_ev(&gyro_x_out);
 		imu.raw.gy = out_ev(&gyro_y_out);
 		imu.raw.gz = out_ev(&gyro_z_out);
+
+		// fill the features array
+		features[features_counter*6] = imu.raw.ax;
+		features[features_counter*6+1] = imu.raw.ay;
+		features[features_counter*6+2] = imu.raw.az;
+		features[features_counter*6+3] = imu.raw.gx;
+		features[features_counter*6+4] = imu.raw.gy;
+		features[features_counter*6+5] = imu.raw.gz;
+		features_counter++;
+
+		if (features_counter >= 300) {
+			features_ready = true;
+			features_counter = 0;
+			printk("Features ready\n");
+		}
 
 
 		const FusionVector accelerometer = {
