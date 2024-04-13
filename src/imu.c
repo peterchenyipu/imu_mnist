@@ -168,6 +168,7 @@ int imu_task(void)
 
     while (1)
     {
+		uint32_t start = k_cycle_get_32();
         // if ((count % 10) == 0U) {
 		// 	sprintf(out_str, "a x:%.1f y:%.1f z:%.1f\ng x:%.1f y:%.1f z:%.1f\n",
 		// 					  out_ev(&accel_x_out),
@@ -242,20 +243,25 @@ int imu_task(void)
 
 		// send position over UART
 		// sprintf(out_str, "p x:%.1f y:%.1f z:%.1f\n", imu.state.px, imu.state.py, imu.state.pz);
-		if (!uartSending) {
+		// if (!uartSending) {
 			uartSending = true;
 			frame.fdata[0] = imu.state.qw;
 			frame.fdata[1] = imu.state.qx;
 			frame.fdata[2] = imu.state.qy;
 			frame.fdata[3] = imu.state.qz;
 			// sprintf(out_str, "px:%.6f,%.6f,%.6f,%.6f\n\0", imu.state.qw, imu.state.qx, imu.state.qy, imu.state.qz);
-			sprintf(out_str, "px:%.6f,%.6f,%.6f\n\0", imu.state.px, imu.state.py, imu.state.pz);
+			sprintf(out_str, "%.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", imu.raw.ax, imu.raw.ay, imu.raw.az, imu.raw.gx, imu.raw.gy, imu.raw.gz);
+			// sprintf(out_str, "%.6f\n", imu.raw.ax);
 			uart_tx(uart_dev, out_str, strlen(out_str), SYS_FOREVER_US);
 			// uart_tx(uart_dev, (const char *)&frame, sizeof(frame), SYS_FOREVER_US);
-		}
+		// }
 
         count++;
-        k_msleep(1000 * SAMPLE_PERIOD);
+		uint32_t end = k_cycle_get_32();
+		int64_t elapsed_time = end - start;
+		elapsed_time = k_cyc_to_us_floor64(elapsed_time);
+        // k_msleep(1000 * SAMPLE_PERIOD - elapsed_time);
+		k_usleep(1000000 * SAMPLE_PERIOD - elapsed_time);
     }
 }
 
