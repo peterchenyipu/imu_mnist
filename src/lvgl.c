@@ -50,12 +50,18 @@ static void lv_btn_click_callback(lv_event_t *e)
 	count = 0;
 }
 
+LV_FONT_DECLARE(jb_mono_bold);
+// extern lv_font_t jb_mono_bold;
+static lv_style_t style;
+#define RIGHT_DOWN_ARROW "\xE2\x86\x98"
+#define BLUETOOTH_ICON "\xEF\x8A\x94"
+
 int lvgl_task(void)
 {
 	char count_str[11] = {0};
 	const struct device *display_dev;
-	lv_obj_t *hello_world_label;
-	lv_obj_t *count_label;
+	lv_obj_t *middle_label;
+	lv_obj_t *hint_label;
 
 	display_dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
 	if (!device_is_ready(display_dev)) {
@@ -91,49 +97,34 @@ int lvgl_task(void)
 	}
 #endif /* CONFIG_GPIO */
 
-#ifdef CONFIG_LV_Z_ENCODER_INPUT
-	lv_obj_t *arc;
-	lv_group_t *arc_group;
+	lv_style_init(&style);
+	lv_style_set_text_font(&style, &jb_mono_bold);
+	lv_obj_add_style(lv_scr_act(), &style, 0);
 
-	arc = lv_arc_create(lv_scr_act());
-	lv_obj_align(arc, LV_ALIGN_CENTER, 0, 0);
-	lv_obj_set_size(arc, 150, 150);
 
-	arc_group = lv_group_create();
-	lv_group_add_obj(arc_group, arc);
-	lv_indev_set_group(lvgl_input_get_indev(lvgl_encoder), arc_group);
-#endif /* CONFIG_LV_Z_ENCODER_INPUT */
+	middle_label = lv_label_create(lv_scr_act());
 
-	if (IS_ENABLED(CONFIG_LV_Z_POINTER_KSCAN) || IS_ENABLED(CONFIG_LV_Z_POINTER_INPUT)) {
-		lv_obj_t *hello_world_button;
+	lv_label_set_text(middle_label, "Welcome to IMU Keyboard!");
+	
+	lv_label_set_long_mode(middle_label, LV_LABEL_LONG_WRAP);
+	lv_obj_set_width(middle_label, 128);
+	lv_obj_align(middle_label, LV_ALIGN_TOP_MID, 0, 0);
 
-		hello_world_button = lv_btn_create(lv_scr_act());
-		lv_obj_align(hello_world_button, LV_ALIGN_CENTER, 0, 0);
-		lv_obj_add_event_cb(hello_world_button, lv_btn_click_callback, LV_EVENT_CLICKED,
-						NULL);
-		hello_world_label = lv_label_create(hello_world_button);
-	} else {
-		hello_world_label = lv_label_create(lv_scr_act());
-	}
-
-	lv_label_set_text(hello_world_label, "Hello world!");
-	lv_obj_align(hello_world_label, LV_ALIGN_CENTER, 0, 0);
-
-	count_label = lv_label_create(lv_scr_act());
-	lv_obj_align(count_label, LV_ALIGN_BOTTOM_MID, 0, 0);
+	
+	
+	hint_label = lv_label_create(lv_scr_act());
+	lv_label_set_text_fmt(hint_label, "Press lower right button to start writing %s,%s.", RIGHT_DOWN_ARROW, BLUETOOTH_ICON);
+	lv_obj_set_width(hint_label, 128);
+	lv_label_set_long_mode(hint_label, LV_LABEL_LONG_SCROLL_CIRCULAR);
+	lv_obj_align(hint_label, LV_ALIGN_BOTTOM_MID, 0, 0);
 
 	lv_task_handler();
+
 	display_blanking_off(display_dev);
 	char out_str[64];
 
 	while (1) {
-		if ((count % 100) == 0U) {
-			FusionEuler euler = getEuler();
-			// FusionEuler euler = {0};
-			sprintf(out_str, "R:%.1f, P:%.1f, Y:%.1f", euler.angle.roll, euler.angle.pitch, euler.angle.yaw);
-			// sprintf(count_str, "%d", count/100U);
-			lv_label_set_text(count_label, out_str);
-		}
+
 		lv_task_handler();
 		++count;
 		k_sleep(K_MSEC(10));
