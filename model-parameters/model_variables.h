@@ -25,16 +25,16 @@
 #include <stdint.h>
 #include "model_metadata.h"
 
-#include "tflite-model/tflite_learn_12_compiled.h"
+#include "tflite-model/tflite_learn_5_compiled.h"
 #include "edge-impulse-sdk/classifier/ei_model_types.h"
 #include "edge-impulse-sdk/classifier/inferencing_engines/engines.h"
 
 const char* ei_classifier_inferencing_categories[] = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" };
 
-uint8_t ei_dsp_config_8_axes[] = { 0, 1, 2, 3, 4, 5 };
-const uint32_t ei_dsp_config_8_axes_size = 6;
-ei_dsp_config_raw_t ei_dsp_config_8 = {
-    8, // uint32_t blockId
+uint8_t ei_dsp_config_4_axes[] = { 0, 1, 2, 3, 4, 5 };
+const uint32_t ei_dsp_config_4_axes_size = 6;
+ei_dsp_config_raw_t ei_dsp_config_4 = {
+    4, // uint32_t blockId
     1, // int implementationVersion
     6, // int length of axes
     1.0f // float scale-axes
@@ -42,30 +42,30 @@ ei_dsp_config_raw_t ei_dsp_config_8 = {
 
 const size_t ei_dsp_blocks_size = 1;
 ei_model_dsp_t ei_dsp_blocks[ei_dsp_blocks_size] = {
-    { // DSP block 8
-        8,
+    { // DSP block 4
+        4,
         1800, // output size
         &extract_raw_features, // DSP function pointer
-        (void*)&ei_dsp_config_8, // pointer to config struct
-        ei_dsp_config_8_axes, // array of offsets into the input stream, one for each axis
-        ei_dsp_config_8_axes_size, // number of axes
+        (void*)&ei_dsp_config_4, // pointer to config struct
+        ei_dsp_config_4_axes, // array of offsets into the input stream, one for each axis
+        ei_dsp_config_4_axes_size, // number of axes
         1, // version
         nullptr, // factory function
     }
 };
-const ei_config_tflite_eon_graph_t ei_config_tflite_graph_12 = {
+const ei_config_tflite_eon_graph_t ei_config_tflite_graph_5 = {
     .implementation_version = 1,
-    .model_init = &tflite_learn_12_init,
-    .model_invoke = &tflite_learn_12_invoke,
-    .model_reset = &tflite_learn_12_reset,
-    .model_input = &tflite_learn_12_input,
-    .model_output = &tflite_learn_12_output,
+    .model_init = &tflite_learn_5_init,
+    .model_invoke = &tflite_learn_5_invoke,
+    .model_reset = &tflite_learn_5_reset,
+    .model_input = &tflite_learn_5_input,
+    .model_output = &tflite_learn_5_output,
 };
 
-const ei_learning_block_config_tflite_graph_t ei_learning_block_config_12 = {
+const ei_learning_block_config_tflite_graph_t ei_learning_block_config_5 = {
     .implementation_version = 1,
     .classification_mode = EI_CLASSIFIER_CLASSIFICATION_MODE_CLASSIFICATION,
-    .block_id = 12,
+    .block_id = 5,
     .object_detection = 0,
     .object_detection_last_layer = EI_CLASSIFIER_LAST_LAYER_UNKNOWN,
     .output_data_tensor = 0,
@@ -74,21 +74,21 @@ const ei_learning_block_config_tflite_graph_t ei_learning_block_config_12 = {
     .threshold = 0,
     .quantized = 1,
     .compiled = 1,
-    .graph_config = (void*)&ei_config_tflite_graph_12
+    .graph_config = (void*)&ei_config_tflite_graph_5
 };
 
 const size_t ei_learning_blocks_size = 1;
-const uint32_t ei_learning_block_12_inputs[1] = { 8 };
-const uint32_t ei_learning_block_12_inputs_size = 1;
+const uint32_t ei_learning_block_5_inputs[1] = { 4 };
+const uint32_t ei_learning_block_5_inputs_size = 1;
 const ei_learning_block_t ei_learning_blocks[ei_learning_blocks_size] = {
     {
-        12,
+        5,
         false,
         &run_nn_inference,
-        (void*)&ei_learning_block_config_12,
+        (void*)&ei_learning_block_config_5,
         EI_CLASSIFIER_IMAGE_SCALING_NONE,
-        ei_learning_block_12_inputs,
-        ei_learning_block_12_inputs_size,
+        ei_learning_block_5_inputs,
+        ei_learning_block_5_inputs_size,
         10
     },
 };
@@ -106,11 +106,11 @@ const ei_object_detection_nms_config_t ei_object_detection_nms = {
     0.2f  /* NMS IOU threshold */
 };
 
-const ei_impulse_t impulse_365713_0 = {
-    .project_id = 365713,
+const ei_impulse_t impulse_385690_0 = {
+    .project_id = 385690,
     .project_owner = "Yipu Chen",
-    .project_name = "peteop1-project-1",
-    .deploy_version = 5,
+    .project_name = "imu_mnist",
+    .deploy_version = 1,
 
     .nn_input_frame_size = 1800,
     .raw_sample_count = 300,
@@ -145,7 +145,7 @@ const ei_impulse_t impulse_365713_0 = {
     .object_detection_nms = ei_object_detection_nms
 };
 
-ei_impulse_handle_t impulse_handle_365713_0 = ei_impulse_handle_t( &impulse_365713_0 );
-ei_impulse_handle_t& ei_default_impulse = impulse_handle_365713_0;
+ei_impulse_handle_t impulse_handle_385690_0 = ei_impulse_handle_t( &impulse_385690_0 );
+ei_impulse_handle_t& ei_default_impulse = impulse_handle_385690_0;
 
 #endif // _EI_CLASSIFIER_MODEL_METADATA_H_

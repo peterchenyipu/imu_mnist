@@ -24,6 +24,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #define EI_CLASSIFIER_NONE                       255
 #define EI_CLASSIFIER_UTENSOR                    1
@@ -57,10 +58,10 @@
 #define EI_CLASSIFIER_DATATYPE_UINT8             3
 #define EI_CLASSIFIER_DATATYPE_INT8              9
 
-#define EI_CLASSIFIER_PROJECT_ID                 365713
+#define EI_CLASSIFIER_PROJECT_ID                 385690
 #define EI_CLASSIFIER_PROJECT_OWNER              "Yipu Chen"
-#define EI_CLASSIFIER_PROJECT_NAME               "peteop1-project-1"
-#define EI_CLASSIFIER_PROJECT_DEPLOY_VERSION     5
+#define EI_CLASSIFIER_PROJECT_NAME               "imu_mnist"
+#define EI_CLASSIFIER_PROJECT_DEPLOY_VERSION     1
 #define EI_CLASSIFIER_NN_INPUT_FRAME_SIZE        1800
 #define EI_CLASSIFIER_RAW_SAMPLE_COUNT           300
 #define EI_CLASSIFIER_RAW_SAMPLES_PER_FRAME      6
@@ -76,6 +77,7 @@
 #define EI_CLASSIFIER_SINGLE_FEATURE_INPUT       1
 #define EI_CLASSIFIER_FREQUENCY                  100
 #define EI_CLASSIFIER_HAS_MODEL_VARIABLES        1
+#define EI_CLASSIFIER_THRESHOLD                  0.3
 
 #define EI_CLASSIFIER_OBJECT_DETECTION             0
 #define EI_CLASSIFIER_TFLITE_OUTPUT_DATA_TENSOR    0
@@ -119,7 +121,7 @@
 
 #define EI_STUDIO_VERSION_MAJOR             1
 #define EI_STUDIO_VERSION_MINOR             49
-#define EI_STUDIO_VERSION_PATCH             4
+#define EI_STUDIO_VERSION_PATCH             13
 
 #if ((EI_CLASSIFIER_INFERENCING_ENGINE == EI_CLASSIFIER_TFLITE) ||      (EI_CLASSIFIER_INFERENCING_ENGINE == EI_CLASSIFIER_DRPAI)) &&      EI_CLASSIFIER_USE_FULL_TFLITE == 1
 
@@ -135,6 +137,11 @@
 #error "Cannot use full TensorFlow Lite with EON"
 #endif
 #endif // ((EI_CLASSIFIER_INFERENCING_ENGINE == EI_CLASSIFIER_TFLITE) || (EI_CLASSIFIER_INFERENCING_ENGINE == EI_CLASSIFIER_DRPAI)) && EI_CLASSIFIER_USE_FULL_TFLITE == 1
+
+typedef struct {
+    const char *name;
+    int axis;
+} ei_dsp_named_axis_t;
 
 typedef struct {
     uint32_t block_id;
@@ -155,6 +162,8 @@ typedef struct {
     uint32_t block_id;
     uint16_t implementation_version;
     int axes;
+    ei_dsp_named_axis_t * named_axes;
+    size_t named_axes_size;
     const char * channels;
 } ei_dsp_config_image_t;
 
@@ -162,6 +171,8 @@ typedef struct {
     uint32_t block_id;
     uint16_t implementation_version;
     int axes;
+    ei_dsp_named_axis_t * named_axes;
+    size_t named_axes_size;
     int num_cepstral;
     float frame_length;
     float frame_stride;
@@ -178,6 +189,8 @@ typedef struct {
     uint32_t block_id;
     uint16_t implementation_version;
     int axes;
+    ei_dsp_named_axis_t * named_axes;
+    size_t named_axes_size;
     float frame_length;
     float frame_stride;
     int num_filters;
@@ -220,6 +233,8 @@ typedef struct {
     uint32_t block_id;
     uint16_t implementation_version;
     int axes;
+    ei_dsp_named_axis_t * named_axes;
+    size_t named_axes_size;
     float frame_length;
     float frame_stride;
     int fft_length;
@@ -231,6 +246,8 @@ typedef struct {
     uint32_t block_id;
     uint16_t implementation_version;
     int axes;
+    ei_dsp_named_axis_t * named_axes;
+    size_t named_axes_size;
     float frame_length;
     float frame_stride;
     int num_filters;

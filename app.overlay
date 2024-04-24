@@ -18,6 +18,8 @@
         zephyr,display = &ssd1306_ssd1306_128x64;
     };
 
+
+    compatible = "flash";
 };
 
 

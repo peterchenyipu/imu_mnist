@@ -108,20 +108,20 @@ int imu_task(void)
 	}
 
 	/* set accel/gyro sampling frequency to 104 Hz */
-	odr_attr.val1 = 104;
-	odr_attr.val2 = 0;
+	// odr_attr.val1 = 104;
+	// odr_attr.val2 = 0;
 
-	if (sensor_attr_set(lsm6dsl_dev, SENSOR_CHAN_ACCEL_XYZ,
-			    SENSOR_ATTR_SAMPLING_FREQUENCY, &odr_attr) < 0) {
-		printk("Cannot set sampling frequency for accelerometer.\n");
-		return 0;
-	}
+	// if (sensor_attr_set(lsm6dsl_dev, SENSOR_CHAN_ACCEL_XYZ,
+	// 		    SENSOR_ATTR_SAMPLING_FREQUENCY, &odr_attr) < 0) {
+	// 	printk("Cannot set sampling frequency for accelerometer.\n");
+	// 	return 0;
+	// }
 
-	if (sensor_attr_set(lsm6dsl_dev, SENSOR_CHAN_GYRO_XYZ,
-			    SENSOR_ATTR_SAMPLING_FREQUENCY, &odr_attr) < 0) {
-		printk("Cannot set sampling frequency for gyro.\n");
-		return 0;
-	}
+	// if (sensor_attr_set(lsm6dsl_dev, SENSOR_CHAN_GYRO_XYZ,
+	// 		    SENSOR_ATTR_SAMPLING_FREQUENCY, &odr_attr) < 0) {
+	// 	printk("Cannot set sampling frequency for gyro.\n");
+	// 	return 0;
+	// }
 
 #ifdef CONFIG_LSM6DSL_TRIGGER
 	struct sensor_trigger trig;
