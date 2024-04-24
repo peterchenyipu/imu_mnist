@@ -91,7 +91,7 @@ struct Frame frame = {
 int imu_task(void)
 {
     int cnt = 0;
-	char out_str[64];
+	char out_str[100];
 	struct sensor_value odr_attr;
 	const struct device *const lsm6dsl_dev = DEVICE_DT_GET_ONE(st_lsm6dsl);
 
@@ -100,21 +100,22 @@ int imu_task(void)
 		return 0;
 	}
 
-	/* set accel/gyro sampling frequency to 104 Hz */
-	odr_attr.val1 = 104;
-	odr_attr.val2 = 0;
+	// /* set accel/gyro sampling frequency to 208 Hz */
+	// odr_attr.val1 = 208;
+	// odr_attr.val2 = 0;
 
-	if (sensor_attr_set(lsm6dsl_dev, SENSOR_CHAN_ACCEL_XYZ,
-			    SENSOR_ATTR_SAMPLING_FREQUENCY, &odr_attr) < 0) {
-		printk("Cannot set sampling frequency for accelerometer.\n");
-		return 0;
-	}
+	// if (sensor_attr_set(lsm6dsl_dev, SENSOR_CHAN_ACCEL_XYZ,
+	// 		    SENSOR_ATTR_SAMPLING_FREQUENCY, &odr_attr) < 0) {
+	// 	printk("Cannot set sampling frequency for accelerometer.\n");
+	// 	return 0;
+	// }
 
-	if (sensor_attr_set(lsm6dsl_dev, SENSOR_CHAN_GYRO_XYZ,
-			    SENSOR_ATTR_SAMPLING_FREQUENCY, &odr_attr) < 0) {
-		printk("Cannot set sampling frequency for gyro.\n");
-		return 0;
-	}
+	// if (sensor_attr_set(lsm6dsl_dev, SENSOR_CHAN_GYRO_XYZ,
+	// 		    SENSOR_ATTR_SAMPLING_FREQUENCY, &odr_attr) < 0) {
+	// 	printk("Cannot set sampling frequency for gyro.\n");
+	// 	return 0;
+	// }
+	// set using config file instead
 
 #ifdef CONFIG_LSM6DSL_TRIGGER
 	struct sensor_trigger trig;
@@ -245,12 +246,12 @@ int imu_task(void)
 		// sprintf(out_str, "p x:%.1f y:%.1f z:%.1f\n", imu.state.px, imu.state.py, imu.state.pz);
 		// if (!uartSending) {
 			uartSending = true;
-			frame.fdata[0] = imu.state.qw;
-			frame.fdata[1] = imu.state.qx;
-			frame.fdata[2] = imu.state.qy;
-			frame.fdata[3] = imu.state.qz;
+			// frame.fdata[0] = imu.state.qw;
+			// frame.fdata[1] = imu.state.qx;
+			// frame.fdata[2] = imu.state.qy;
+			// frame.fdata[3] = imu.state.qz;
 			// sprintf(out_str, "px:%.6f,%.6f,%.6f,%.6f\n\0", imu.state.qw, imu.state.qx, imu.state.qy, imu.state.qz);
-			sprintf(out_str, "%.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", imu.raw.ax, imu.raw.ay, imu.raw.az, imu.raw.gx, imu.raw.gy, imu.raw.gz);
+			sprintf(out_str, "%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,\n", imu.raw.ax, imu.raw.ay, imu.raw.az, imu.raw.gx, imu.raw.gy, imu.raw.gz);
 			// sprintf(out_str, "%.6f\n", imu.raw.ax);
 			uart_tx(uart_dev, out_str, strlen(out_str), SYS_FOREVER_US);
 			// uart_tx(uart_dev, (const char *)&frame, sizeof(frame), SYS_FOREVER_US);
