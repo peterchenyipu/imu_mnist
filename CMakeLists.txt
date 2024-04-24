@@ -38,9 +38,12 @@ list(APPEND SOURCE_FILES ${MODEL_FILES})
 FILE(GLOB_RECURSE app_sources src/*.c)
 list(APPEND SOURCE_FILES ${app_sources})
 
+FILE(GLOB_RECURSE app_sources src/*.cpp)
+list(APPEND SOURCE_FILES ${app_sources})
+
 target_sources(app PRIVATE
   ${SOURCE_FILES}
   )
-target_sources(app PRIVATE src/main.cpp)
+# target_sources(app PRIVATE src/main.cpp)
 
 
