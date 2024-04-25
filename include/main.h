@@ -5,8 +5,8 @@
 extern "C" {
 #endif
 
-extern bool inference_done;
-extern int inference_result;
+extern volatile bool inference_done;
+extern volatile int inference_result;
 
 #ifdef __cplusplus
 }

@@ -26,7 +26,8 @@ typedef struct IMU {
 
 
 extern float features[1800];
-extern bool features_ready;
+extern volatile bool features_ready;
+extern volatile int features_counter;
 
 #ifdef __cplusplus
 }

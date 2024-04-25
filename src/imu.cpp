@@ -39,7 +39,7 @@ static void lsm6dsl_trigger_handler(const struct device *dev,
 	static struct sensor_value gyro_x, gyro_y, gyro_z;
 
 	lsm6dsl_trig_cnt++;
-	printk("lsm6dsl_trig_cnt: %d\n", lsm6dsl_trig_cnt);
+	// printk("lsm6dsl_trig_cnt: %d\n", lsm6dsl_trig_cnt);
 
 	sensor_sample_fetch_chan(dev, SENSOR_CHAN_ACCEL_XYZ);
 	sensor_channel_get(dev, SENSOR_CHAN_ACCEL_X, &accel_x);
@@ -82,10 +82,10 @@ struct Frame frame = {
 
 
 float features[1800] = {0};
-bool features_ready = false;
-bool collecting = false;
+volatile bool features_ready = false;
+volatile bool collecting = false;
 
-static int features_counter = 0;
+volatile int features_counter = 0;
 
 int imu_task(void)
 {
@@ -146,12 +146,11 @@ int imu_task(void)
     {
 		if (state == COLLECT_DATA)
 		{
-			if (!collecting)
+			if (!collecting && !features_ready)
 			{
 				printk("Start Collecting data\n");
 				collecting = true;
 				features_counter = 0;
-				features_ready = false;
 			}
 			uint32_t start = k_cycle_get_32();
 			

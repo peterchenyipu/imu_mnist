@@ -18,7 +18,10 @@ static const struct gpio_dt_spec blue_led = GPIO_DT_SPEC_GET(LED2_NODE, gpios);
 
 #define RUN_LED_PERIOD 1000
 #define PAIR_LED_PERIOD 100
+#define CONNECTED_LED_PERIOD 2000
+#define COLLECT_LED_PERIOD 100
 
+bool run_blink = false;
 int my_entry_point(void *, void *, void *)
 {
     int ret;
@@ -32,7 +35,8 @@ int my_entry_point(void *, void *, void *)
 	gpio_pin_set_dt(&blue_led, 0);
 
 	while (1) {
-		if (counter % RUN_LED_PERIOD == 0)
+
+		if (run_blink && counter % RUN_LED_PERIOD == 0)
 		{
 			ret = gpio_pin_toggle_dt(&red_led);
 		}
@@ -46,7 +50,28 @@ int my_entry_point(void *, void *, void *)
 			}
 		} else if (state != START && state != DISCONNECT_DISPLAY)
 		{
-			ret = gpio_pin_set_dt(&blue_led, 1);
+			if (counter % CONNECTED_LED_PERIOD > 50)
+			{
+				ret = gpio_pin_set_dt(&blue_led, 0);
+			} else 
+			{
+				ret = gpio_pin_set_dt(&blue_led, 1);
+			}
+		}
+
+		// green led states
+		if (state == IDLE)
+		{
+			ret = gpio_pin_set_dt(&green_led, 1);
+		} else if (state == COLLECT_DATA)
+		{
+			if (counter % COLLECT_LED_PERIOD == 0)
+			{
+				ret = gpio_pin_toggle_dt(&green_led);
+			}
+		} else
+		{
+			ret = gpio_pin_set_dt(&green_led, 0);
 		}
 
 		counter += SLEEP_TIME_MS;

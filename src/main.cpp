@@ -12,8 +12,8 @@
 #include <hog.h>
 #include <main.h>
 
-bool inference_done = false;
-int inference_result = -1;
+volatile bool inference_done = false;
+volatile int inference_result = -1;
 
 // static const float features[] = {
 //     // copy raw features here (for example from the 'Live classification' page)
@@ -51,54 +51,55 @@ int main() {
             // printk("Waiting for features...\n");
             k_msleep(100);
             continue;
-        }
-        inference_done = false;
-        printk("Running inferencing...\n");
-        // the features are stored into flash, and we don't want to load everything into RAM
-        signal_t features_signal;
-        features_signal.total_length = sizeof(features) / sizeof(features[0]);
-        features_signal.get_data = &raw_feature_get_data;
+        } else {
+            inference_done = false;
+            printk("Running inferencing...\n");
+            // the features are stored into flash, and we don't want to load everything into RAM
+            signal_t features_signal;
+            features_signal.total_length = sizeof(features) / sizeof(features[0]);
+            features_signal.get_data = &raw_feature_get_data;
 
-        // invoke the impulse
-        EI_IMPULSE_ERROR res = run_classifier(&features_signal, &result, true);
-        printk("run_classifier returned: %d\n", res);
+            // invoke the impulse
+            EI_IMPULSE_ERROR res = run_classifier(&features_signal, &result, true);
+            printk("run_classifier returned: %d\n", res);
 
-        if (res != 0) return 1;
+            if (res != 0) return 1;
 
-        printk("Predictions (DSP: %d ms., Classification: %d ms., Anomaly: %d ms.): \n",
-                result.timing.dsp, result.timing.classification, result.timing.anomaly);
-#if EI_CLASSIFIER_OBJECT_DETECTION == 1
-        bool bb_found = result.bounding_boxes[0].value > 0;
-        for (size_t ix = 0; ix < result.bounding_boxes_count; ix++) {
-            auto bb = result.bounding_boxes[ix];
-            if (bb.value == 0) {
-                continue;
+            printk("Predictions (DSP: %d ms., Classification: %d ms., Anomaly: %d ms.): \n",
+                    result.timing.dsp, result.timing.classification, result.timing.anomaly);
+    #if EI_CLASSIFIER_OBJECT_DETECTION == 1
+            bool bb_found = result.bounding_boxes[0].value > 0;
+            for (size_t ix = 0; ix < result.bounding_boxes_count; ix++) {
+                auto bb = result.bounding_boxes[ix];
+                if (bb.value == 0) {
+                    continue;
+                }
+                printk("    %s (%f) [ x: %u, y: %u, width: %u, height: %u ]\n", bb.label, bb.value, bb.x, bb.y, bb.width, bb.height);
             }
-            printk("    %s (%f) [ x: %u, y: %u, width: %u, height: %u ]\n", bb.label, bb.value, bb.x, bb.y, bb.width, bb.height);
-        }
-        if (!bb_found) {
-            printk("    No objects found\n");
-        }
-#else
-        int largest_probability_index = 0;
-        float largest_probability = 0;
-        for (size_t ix = 0; ix < EI_CLASSIFIER_LABEL_COUNT; ix++) {
-            printk("    %s: %.5f\n", result.classification[ix].label,
-                                    result.classification[ix].value);
-            if (result.classification[ix].value > largest_probability) {
-                largest_probability = result.classification[ix].value;
-                largest_probability_index = ix;
+            if (!bb_found) {
+                printk("    No objects found\n");
             }
-        }
-        inference_result = largest_probability_index;
-        write(largest_probability_index + '0');
+    #else
+            int largest_probability_index = 0;
+            float largest_probability = 0;
+            for (size_t ix = 0; ix < EI_CLASSIFIER_LABEL_COUNT; ix++) {
+                printk("    %s: %.5f\n", result.classification[ix].label,
+                                        result.classification[ix].value);
+                if (result.classification[ix].value > largest_probability) {
+                    largest_probability = result.classification[ix].value;
+                    largest_probability_index = ix;
+                }
+            }
+            inference_result = largest_probability_index;
+            write(largest_probability_index + '0');
 
-#if EI_CLASSIFIER_HAS_ANOMALY == 1
-        printk("    anomaly score: %.3f\n", result.anomaly);
-#endif
-#endif
-        features_ready = false;
-        inference_done = true;
-        // k_msleep(2000);
+    #if EI_CLASSIFIER_HAS_ANOMALY == 1
+            printk("    anomaly score: %.3f\n", result.anomaly);
+    #endif
+    #endif
+            inference_done = true;
+            k_msleep(2000);
+        }
+        
     }
 }

@@ -16,7 +16,7 @@ enum State {
     DISPLAY_INFERENCE
 };
 
-extern State state;
+extern volatile State state;
 
 
 
