@@ -10,6 +10,10 @@
 #include <nrfx_clock.h>
 #include <imu.h>
 #include <hog.h>
+#include <main.h>
+
+bool inference_done = false;
+int inference_result = -1;
 
 // static const float features[] = {
 //     // copy raw features here (for example from the 'Live classification' page)
@@ -48,6 +52,7 @@ int main() {
             k_msleep(100);
             continue;
         }
+        inference_done = false;
         printk("Running inferencing...\n");
         // the features are stored into flash, and we don't want to load everything into RAM
         signal_t features_signal;
@@ -85,6 +90,7 @@ int main() {
                 largest_probability_index = ix;
             }
         }
+        inference_result = largest_probability_index;
         write(largest_probability_index + '0');
 
 #if EI_CLASSIFIER_HAS_ANOMALY == 1
@@ -92,6 +98,7 @@ int main() {
 #endif
 #endif
         features_ready = false;
+        inference_done = true;
         // k_msleep(2000);
     }
 }

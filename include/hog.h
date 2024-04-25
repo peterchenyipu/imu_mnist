@@ -88,6 +88,9 @@ void write(uint8_t k);
  */
 void write_string(const char *str);
 
+extern bool ble_connected;
+extern char ble_master_name[32];
+
 #ifdef __cplusplus
 }
 #endif

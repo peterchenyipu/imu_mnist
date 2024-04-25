@@ -636,6 +636,9 @@ static const struct bt_data ad[] = {
 		      BT_UUID_16_ENCODE(BT_UUID_BAS_VAL)),
 };
 
+bool ble_connected = false;
+char ble_master_name[32] = {0};
+
 static void connected(struct bt_conn *conn, uint8_t err)
 {
 	char addr[BT_ADDR_LE_STR_LEN];
@@ -648,6 +651,9 @@ static void connected(struct bt_conn *conn, uint8_t err)
 	}
 
 	printk("Connected %s\n", addr);
+	ble_connected = true;
+	ble_master_name[0] = '\0';
+	strcpy(ble_master_name, addr);
 
 	if (bt_conn_set_security(conn, BT_SECURITY_L2)) {
 		printk("Failed to set security\n");
@@ -659,6 +665,10 @@ static void disconnected(struct bt_conn *conn, uint8_t reason)
 	char addr[BT_ADDR_LE_STR_LEN];
 
 	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
+	ble_connected = false;
+	ble_master_name[0] = '\0';
+	strcpy(ble_master_name, addr);
+
 
 	printk("Disconnected from %s (reason 0x%02x)\n", addr, reason);
 }
