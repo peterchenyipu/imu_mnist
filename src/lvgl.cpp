@@ -123,6 +123,7 @@ int lvgl_task(void)
 	
 	lv_label_set_long_mode(middle_label, LV_LABEL_LONG_WRAP);
 	lv_obj_set_width(middle_label, 128);
+	lv_obj_set_style_text_align(middle_label, LV_TEXT_ALIGN_CENTER, 0);
 	lv_obj_align(middle_label, LV_ALIGN_TOP_MID, 0, 0);
 
 	
@@ -152,13 +153,13 @@ int lvgl_task(void)
 		}
 		else if (state == PAIR)
 		{
-			lv_label_set_text_fmt(hint_label, "Waiting for Bluetooth connection %s. Device name: %s.", BLUETOOTH_ICON, CONFIG_BT_DEVICE_NAME);
+			lv_label_set_text_fmt(hint_label, "Waiting for %s. Device name: %s.", BLUETOOTH_ICON, CONFIG_BT_DEVICE_NAME);
 			if (ble_connected)
 			{
 				state = PAIR_DISPLAY;
 				lv_label_set_text_fmt(hint_label, "%s Connected to %s.", BLUETOOTH_ICON, ble_master_name);
 				timer_expired = false;
-				k_timer_start(&my_timer, K_SECONDS(8), K_NO_WAIT);
+				k_timer_start(&my_timer, K_SECONDS(5), K_NO_WAIT);
 			}
 		}
 		else if (state == PAIR_DISPLAY)
@@ -171,9 +172,9 @@ int lvgl_task(void)
 			if (!ble_connected)
 			{
 				state = DISCONNECT_DISPLAY;
-				lv_label_set_text_fmt(hint_label, "%s Bluetooth disconnected from %s.", BLUETOOTH_ICON, ble_master_name);
+				lv_label_set_text_fmt(hint_label, "%s disconnected from %s.", BLUETOOTH_ICON, ble_master_name);
 				timer_expired = false;
-				k_timer_start(&my_timer, K_SECONDS(8), K_NO_WAIT);
+				k_timer_start(&my_timer, K_SECONDS(5), K_NO_WAIT);
 			}
 		}
 		else if (state == DISCONNECT_DISPLAY)
@@ -186,7 +187,7 @@ int lvgl_task(void)
 		}
 		else if (state == IDLE)
 		{
-			lv_label_set_text_fmt(hint_label, "Press lower right button to start writing %s,%s.", RIGHT_DOWN_ARROW, BLUETOOTH_ICON);
+			lv_label_set_text_fmt(hint_label, "Press button to start writing %s.", RIGHT_DOWN_ARROW);
 			
 			if (last_button_state == 1 && this_button_state == 0) // transition to collect data
 			{
@@ -198,9 +199,9 @@ int lvgl_task(void)
 			if (!ble_connected)
 			{
 				state = DISCONNECT_DISPLAY;
-				lv_label_set_text_fmt(hint_label, "%s Bluetooth disconnected from %s.", BLUETOOTH_ICON, ble_master_name);
+				lv_label_set_text_fmt(hint_label, "%s disconnected from %s.", BLUETOOTH_ICON, ble_master_name);
 				timer_expired = false;
-				k_timer_start(&my_timer, K_SECONDS(8), K_NO_WAIT);
+				k_timer_start(&my_timer, K_SECONDS(5), K_NO_WAIT);
 			}
 		
 		} else if (state == COLLECT_DATA)
@@ -215,8 +216,8 @@ int lvgl_task(void)
 			if (inference_done)
 			{
 				state = DISPLAY_INFERENCE;
-				lv_label_set_text_fmt(hint_label, "Inference Result: %c.", inference_result + '0');
-				k_timer_start(&my_timer, K_SECONDS(1), K_NO_WAIT);
+				lv_label_set_text_fmt(hint_label, "Result: %c.", inference_result + '0');
+				k_timer_start(&my_timer, K_SECONDS(3), K_NO_WAIT);
 			}
 		} else if (state == DISPLAY_INFERENCE)
 		{

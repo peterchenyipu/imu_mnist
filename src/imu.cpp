@@ -5,6 +5,7 @@
 #include <zephyr/kernel.h>
 #include <imu.h>
 #include <zephyr/drivers/uart.h>
+#include <state_machine.h>
 
 FusionEuler euler;
 
@@ -38,7 +39,7 @@ static void lsm6dsl_trigger_handler(const struct device *dev,
 	static struct sensor_value gyro_x, gyro_y, gyro_z;
 
 	lsm6dsl_trig_cnt++;
-	printk("lsm6dsl trigger cnt: %d\n", lsm6dsl_trig_cnt);
+	printk("lsm6dsl_trig_cnt: %d\n", lsm6dsl_trig_cnt);
 
 	sensor_sample_fetch_chan(dev, SENSOR_CHAN_ACCEL_XYZ);
 	sensor_channel_get(dev, SENSOR_CHAN_ACCEL_X, &accel_x);
@@ -82,9 +83,9 @@ struct Frame frame = {
 
 float features[1800] = {0};
 bool features_ready = false;
+bool collecting = false;
 
 static int features_counter = 0;
-#define SW0_NODE DT_ALIAS(sw0)
 
 int imu_task(void)
 {
@@ -122,135 +123,123 @@ int imu_task(void)
 
 	if (sensor_trigger_set(lsm6dsl_dev, &trig, lsm6dsl_trigger_handler) != 0) {
 		printk("Could not set sensor type and channel\n");
-		return 0;
+		while (1)
+			;
 	}
 #endif
 
 	if (sensor_sample_fetch(lsm6dsl_dev) < 0) {
 		printk("Sensor sample update error\n");
-		return 0;
+		while (1)
+			;
 	}
 	
-	const struct gpio_dt_spec sw0 = GPIO_DT_SPEC_GET(SW0_NODE, gpios);
-
-	gpio_pin_configure_dt(&sw0, GPIO_INPUT);
-	int last_state = 0;
-
     uint32_t count = 0;
 
 	FusionAhrs ahrs;
 	// TODO add calibration here
     FusionAhrsInitialise(&ahrs);
 
-	bool collecting = false;
+	
 
     while (1)
     {
-		if (features_ready)
+		if (state == COLLECT_DATA)
 		{
-			// doing inference, skip
-			k_msleep(200);
-			last_state = gpio_pin_get_dt(&sw0);
-			continue;
+			if (!collecting)
+			{
+				printk("Start Collecting data\n");
+				collecting = true;
+				features_counter = 0;
+				features_ready = false;
+			}
+			uint32_t start = k_cycle_get_32();
+			
+			// Update IMU
+			// accel in m/s^2, gyro in rad/s
+			imu.raw.ax = out_ev(&accel_x_out);
+			imu.raw.ay = out_ev(&accel_y_out);
+			imu.raw.az = out_ev(&accel_z_out);
+			imu.raw.gx = out_ev(&gyro_x_out);
+			imu.raw.gy = out_ev(&gyro_y_out);
+			imu.raw.gz = out_ev(&gyro_z_out);
+
+			// fill the features array
+			features[features_counter*6] = imu.raw.ax;
+			features[features_counter*6+1] = imu.raw.ay;
+			features[features_counter*6+2] = imu.raw.az;
+			features[features_counter*6+3] = imu.raw.gx;
+			features[features_counter*6+4] = imu.raw.gy;
+			features[features_counter*6+5] = imu.raw.gz;
+			features_counter++;
+
+			if (features_counter >= 300) {
+				features_ready = true;
+				features_counter = 0;
+				collecting = false;
+				printk("Features ready\n");
+			}
+
+
+			// const FusionVector accelerometer = {
+			// 	.array = {
+			// 		imu.raw.ax / ATL_LOCAL_G,
+			// 		imu.raw.ay / ATL_LOCAL_G,
+			// 		imu.raw.az / ATL_LOCAL_G
+			// 	}
+			// };
+			// const FusionVector gyroscope = {
+			// 	.array = {
+			// 		imu.raw.gx * 180.0f / M_PI,
+			// 		imu.raw.gy * 180.0f / M_PI,
+			// 		imu.raw.gz * 180.0f / M_PI
+			// 	}
+			// };
+
+			// FusionAhrsUpdateNoMagnetometer(&ahrs, gyroscope, accelerometer, SAMPLE_PERIOD);
+
+			// const FusionQuaternion quaternion = FusionAhrsGetQuaternion(&ahrs);
+			// euler = FusionQuaternionToEuler(quaternion);
+
+			// // update quaternion
+			// imu.state.qw = quaternion.element.w;
+			// imu.state.qx = quaternion.element.x;
+			// imu.state.qy = quaternion.element.y;
+			// imu.state.qz = quaternion.element.z;
+
+			// // perform dead reckoning
+			// FusionVector accel = FusionAhrsGetEarthAcceleration(&ahrs);
+			// // convert to m/s^2
+			// imu.state.ax = accel.axis.x * ATL_LOCAL_G;
+			// imu.state.ay = accel.axis.y * ATL_LOCAL_G;
+			// imu.state.az = accel.axis.z * ATL_LOCAL_G;
+
+			// if (fabs(imu.state.ax*imu.state.ax + imu.state.ay*imu.state.ay + imu.state.az*imu.state.az) < 1) {
+			// 	imu.state.ax = 0;
+			// 	imu.state.ay = 0;
+			// 	imu.state.az = 0;
+			// 	imu.state.vx *= 0.9;
+			// 	imu.state.vy *= 0.9;
+			// 	imu.state.vz *= 0.9;
+			// }
+
+			// imu.state.vx += imu.state.ax * SAMPLE_PERIOD;
+			// imu.state.vy += imu.state.ay * SAMPLE_PERIOD;
+			// imu.state.vz += imu.state.az * SAMPLE_PERIOD;
+
+			// imu.state.px += imu.state.vx * SAMPLE_PERIOD;
+			// imu.state.py += imu.state.vy * SAMPLE_PERIOD;
+			// imu.state.pz += imu.state.vz * SAMPLE_PERIOD;
+			uint32_t end = k_cycle_get_32();
+			int64_t elapsed_time = end - start;
+			elapsed_time = k_cyc_to_us_floor64(elapsed_time);
+			// k_msleep(1000 * SAMPLE_PERIOD - elapsed_time);
+			k_usleep(1000000 * SAMPLE_PERIOD - elapsed_time);
 		}
-
-		int button_state = gpio_pin_get_dt(&sw0);
-		if (button_state == 1 && last_state == 0) {
-			printk("Start Collection\n");
-			collecting = true;
+		else
+		{
+			k_msleep(100); // wait for inference
 		}
-
-		if (!collecting) {
-			last_state = button_state;
-			k_msleep(200);
-			continue;
-		}
-
-
-		uint32_t start = k_cycle_get_32();
-		
-		// Update IMU
-		// accel in m/s^2, gyro in rad/s
-		imu.raw.ax = out_ev(&accel_x_out);
-		imu.raw.ay = out_ev(&accel_y_out);
-		imu.raw.az = out_ev(&accel_z_out);
-		imu.raw.gx = out_ev(&gyro_x_out);
-		imu.raw.gy = out_ev(&gyro_y_out);
-		imu.raw.gz = out_ev(&gyro_z_out);
-
-		// fill the features array
-		features[features_counter*6] = imu.raw.ax;
-		features[features_counter*6+1] = imu.raw.ay;
-		features[features_counter*6+2] = imu.raw.az;
-		features[features_counter*6+3] = imu.raw.gx;
-		features[features_counter*6+4] = imu.raw.gy;
-		features[features_counter*6+5] = imu.raw.gz;
-		features_counter++;
-
-		if (features_counter >= 300) {
-			features_ready = true;
-			features_counter = 0;
-			collecting = false;
-			printk("Features ready\n");
-		}
-
-
-		// const FusionVector accelerometer = {
-		// 	.array = {
-		// 		imu.raw.ax / ATL_LOCAL_G,
-		// 		imu.raw.ay / ATL_LOCAL_G,
-		// 		imu.raw.az / ATL_LOCAL_G
-		// 	}
-		// };
-        // const FusionVector gyroscope = {
-		// 	.array = {
-		// 		imu.raw.gx * 180.0f / M_PI,
-		// 		imu.raw.gy * 180.0f / M_PI,
-		// 		imu.raw.gz * 180.0f / M_PI
-		// 	}
-		// };
-
-        // FusionAhrsUpdateNoMagnetometer(&ahrs, gyroscope, accelerometer, SAMPLE_PERIOD);
-
-		// const FusionQuaternion quaternion = FusionAhrsGetQuaternion(&ahrs);
-		// euler = FusionQuaternionToEuler(quaternion);
-
-		// // update quaternion
-		// imu.state.qw = quaternion.element.w;
-		// imu.state.qx = quaternion.element.x;
-		// imu.state.qy = quaternion.element.y;
-		// imu.state.qz = quaternion.element.z;
-
-		// // perform dead reckoning
-		// FusionVector accel = FusionAhrsGetEarthAcceleration(&ahrs);
-		// // convert to m/s^2
-		// imu.state.ax = accel.axis.x * ATL_LOCAL_G;
-		// imu.state.ay = accel.axis.y * ATL_LOCAL_G;
-		// imu.state.az = accel.axis.z * ATL_LOCAL_G;
-
-		// if (fabs(imu.state.ax*imu.state.ax + imu.state.ay*imu.state.ay + imu.state.az*imu.state.az) < 1) {
-		// 	imu.state.ax = 0;
-		// 	imu.state.ay = 0;
-		// 	imu.state.az = 0;
-		// 	imu.state.vx *= 0.9;
-		// 	imu.state.vy *= 0.9;
-		// 	imu.state.vz *= 0.9;
-		// }
-
-		// imu.state.vx += imu.state.ax * SAMPLE_PERIOD;
-		// imu.state.vy += imu.state.ay * SAMPLE_PERIOD;
-		// imu.state.vz += imu.state.az * SAMPLE_PERIOD;
-
-		// imu.state.px += imu.state.vx * SAMPLE_PERIOD;
-		// imu.state.py += imu.state.vy * SAMPLE_PERIOD;
-		// imu.state.pz += imu.state.vz * SAMPLE_PERIOD;
-
-        count++;
-		uint32_t end = k_cycle_get_32();
-		int64_t elapsed_time = end - start;
-		elapsed_time = k_cyc_to_us_floor64(elapsed_time);
-        // k_msleep(1000 * SAMPLE_PERIOD - elapsed_time);
-		k_usleep(1000000 * SAMPLE_PERIOD - elapsed_time);
     }
 }
 
