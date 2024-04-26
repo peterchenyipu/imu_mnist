@@ -157,18 +157,18 @@ int lvgl_task(void)
 
 	while (1) {
 		int this_button_state = gpio_pin_get_dt(&sw0);
-
+		State next_state = state;
 
 		if (state == START)
 		{
-			state = PAIR;
+			next_state = PAIR;
 		}
 		else if (state == PAIR)
 		{
 			lv_label_set_text_fmt(hint_label, "Waiting for %s. Device name: %s.", BLUETOOTH_ICON, CONFIG_BT_DEVICE_NAME);
 			if (ble_connected)
 			{
-				state = PAIR_DISPLAY;
+				next_state = PAIR_DISPLAY;
 				lv_label_set_text_fmt(hint_label, "%s Connected to %s.", BLUETOOTH_ICON, ble_master_name);
 				timer_expired = false;
 				k_timer_start(&my_timer, K_SECONDS(5), K_NO_WAIT);
@@ -179,11 +179,11 @@ int lvgl_task(void)
 			if (timer_expired)
 			{
 				timer_expired = false;
-				state = IDLE;
+				next_state = IDLE;
 			}
 			if (!ble_connected)
 			{
-				state = DISCONNECT_DISPLAY;
+				next_state = DISCONNECT_DISPLAY;
 				lv_label_set_text_fmt(hint_label, "%s disconnected from %s.", BLUETOOTH_ICON, ble_master_name);
 				timer_expired = false;
 				k_timer_start(&my_timer, K_SECONDS(5), K_NO_WAIT);
@@ -194,7 +194,7 @@ int lvgl_task(void)
 			if (timer_expired)
 			{
 				timer_expired = false;
-				state = PAIR;
+				next_state = PAIR;
 			}
 		}
 		else if (state == IDLE)
@@ -203,7 +203,7 @@ int lvgl_task(void)
 			
 			if (last_button_state == 1 && this_button_state == 0) // transition to collect data
 			{
-				state = COLLECT_DATA;
+				next_state = COLLECT_DATA;
 				show_progress_bar();
 				lv_label_set_text(hint_label, "Collecting data...");
 			}
@@ -211,7 +211,7 @@ int lvgl_task(void)
 			
 			if (!ble_connected)
 			{
-				state = DISCONNECT_DISPLAY;
+				next_state = DISCONNECT_DISPLAY;
 				lv_label_set_text_fmt(hint_label, "%s disconnected from %s.", BLUETOOTH_ICON, ble_master_name);
 				timer_expired = false;
 				k_timer_start(&my_timer, K_SECONDS(5), K_NO_WAIT);
@@ -221,7 +221,7 @@ int lvgl_task(void)
 		{
 			if (features_ready)
 			{
-				state = INFERENCE;
+				next_state = INFERENCE;
 				hide_progress_bar();
 				lv_label_set_text(hint_label, "Inferencing...");
 			}
@@ -230,7 +230,7 @@ int lvgl_task(void)
 
 			if (!ble_connected)
 			{
-				state = DISCONNECT_DISPLAY;
+				next_state = DISCONNECT_DISPLAY;
 				lv_label_set_text_fmt(hint_label, "%s disconnected from %s.", BLUETOOTH_ICON, ble_master_name);
 				timer_expired = false;
 				k_timer_start(&my_timer, K_SECONDS(5), K_NO_WAIT);
@@ -240,7 +240,7 @@ int lvgl_task(void)
 		{
 			if (inference_done)
 			{
-				state = DISPLAY_INFERENCE;
+				next_state = DISPLAY_INFERENCE;
 				features_ready = false;
 				lv_label_set_text_fmt(hint_label, "Result: %c.", inference_result + '0');
 				k_timer_start(&my_timer, K_SECONDS(3), K_NO_WAIT);
@@ -248,7 +248,7 @@ int lvgl_task(void)
 
 			if (!ble_connected)
 			{
-				state = DISCONNECT_DISPLAY;
+				next_state = DISCONNECT_DISPLAY;
 				lv_label_set_text_fmt(hint_label, "%s disconnected from %s.", BLUETOOTH_ICON, ble_master_name);
 				timer_expired = false;
 				k_timer_start(&my_timer, K_SECONDS(5), K_NO_WAIT);
@@ -258,12 +258,20 @@ int lvgl_task(void)
 			if (timer_expired)
 			{
 				timer_expired = false;
-				state = IDLE;
+				next_state = IDLE;
+			}
+
+			if (last_button_state == 1 && this_button_state == 0) // transition to collect data
+			{
+				next_state = COLLECT_DATA;
+				k_timer_stop(&my_timer);
+				show_progress_bar();
+				lv_label_set_text(hint_label, "Collecting data...");
 			}
 
 			if (!ble_connected)
 			{
-				state = DISCONNECT_DISPLAY;
+				next_state = DISCONNECT_DISPLAY;
 				lv_label_set_text_fmt(hint_label, "%s disconnected from %s.", BLUETOOTH_ICON, ble_master_name);
 				timer_expired = false;
 				k_timer_start(&my_timer, K_SECONDS(5), K_NO_WAIT);
@@ -272,7 +280,7 @@ int lvgl_task(void)
 
 
 		last_button_state = this_button_state;
-
+		state = next_state;
 		lv_task_handler();
 		k_sleep(K_MSEC(5));
 	}
